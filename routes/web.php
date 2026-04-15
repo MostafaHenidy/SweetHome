@@ -1,6 +1,7 @@
 <?php
 
 use App\Helpers\Cart;
+use App\Http\Livewire\ShopPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +44,10 @@ Route::post('/cart/remove', function (Request $request) {
     Cart::remove($request->id);
     return response()->json(['success' => true]);
 })->name('cart.remove');
+
+// Shop routes
+Route::get('/shop', ShopPage::class)->name('shop');
+Route::get('/shop/{category}', ShopPage::class)->name('shop.category');
 
 Route::middleware([
     'auth:sanctum',
