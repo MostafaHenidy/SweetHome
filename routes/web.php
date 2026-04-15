@@ -1,8 +1,9 @@
 <?php
 
-use App\Helpers\Cart;
+use App\Http\Livewire\CartPage;
+use App\Http\Livewire\CheckoutPage;
+use App\Http\Livewire\ProductDetail;
 use App\Http\Livewire\ShopPage;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -14,40 +15,18 @@ Route::get('/auth', function () {
     return view('auth-storefront');
 })->name('auth');
 
-Route::get('/cart', function () {
-    return view('cart', [
-        'items' => Cart::items(),
-        'subtotal' => Cart::subtotal(),
-        'shipping' => Cart::subtotal() > 0 ? 15.00 : 0,
-        'total' => Cart::subtotal() + (Cart::subtotal() > 0 ? 15.00 : 0),
-    ]);
-})->name('cart');
-
-Route::get('/checkout', function () {
-    return view('checkout', [
-        'items' => Cart::items(),
-        'subtotal' => Cart::subtotal(),
-        'shipping' => Cart::subtotal() > 0 ? 15.00 : 0,
-        'total' => Cart::subtotal() + (Cart::subtotal() > 0 ? 15.00 : 0),
-    ]);
-})->name('checkout');
-
-// Cart API routes
-Route::post('/cart/update', function (Request $request) {
-    $request->validate(['id' => 'required', 'quantity' => 'required|integer|min:0']);
-    Cart::update($request->id, $request->quantity);
-    return response()->json(['success' => true]);
-})->name('cart.update');
-
-Route::post('/cart/remove', function (Request $request) {
-    $request->validate(['id' => 'required']);
-    Cart::remove($request->id);
-    return response()->json(['success' => true]);
-})->name('cart.remove');
+// Cart and Checkout
+Route::get('/cart', CartPage::class)->name('cart');
+Route::get('/checkout', CheckoutPage::class)->name('checkout');
+Route::get('/checkout/success/{orderNumber}', function ($orderNumber) {
+    $order = \App\Models\Order::where('order_number', $orderNumber)->firstOrFail();
+    return view('checkout-success', ['order' => $order]);
+})->name('checkout.success');
 
 // Shop routes
 Route::get('/shop', ShopPage::class)->name('shop');
 Route::get('/shop/{category}', ShopPage::class)->name('shop.category');
+Route::get('/product/{slug}', ProductDetail::class)->name('product.show');
 
 Route::middleware([
     'auth:sanctum',
