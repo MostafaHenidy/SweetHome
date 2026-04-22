@@ -4,11 +4,20 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
-use Filament\Forms;
+use Filament\Forms\Components;
+use Filament\Forms\Components\Column;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Layout;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Button;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Filament\Forms\Components\ViewField;
+use Illuminate\Support\Str;
 
 class ProductResource extends Resource
 {
@@ -18,97 +27,294 @@ class ProductResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\Tabs::make('Prodotto')
-                    ->tabs([
-                        Forms\Components\Tabs\Tab::make('Generale')
-                            ->schema([
-                                Forms\Components\TextInput::make('sku')
-                                    ->label('SKU')
-                                    ->required()
-                                    ->unique(ignoreRecord: true),
-                                Forms\Components\TextInput::make('name')
-                                    ->required()
-                                    ->live(onBlur: true)
-                                    ->slug('slug'),
-                                Forms\Components\Hidden::make('slug'),
-                                Forms\Components\Select::make('brand_id')
-                                    ->relationship('brand', 'name')
-                                    ->searchable()
-                                    ->preload(),
-                                Forms\Components\Textarea::make('short_description')
-                                    ->label('Descrizione breve'),
-                                Forms\Components\RichEditor::make('description')
-                                    ->label('Descrizione')
-                                    ->columnSpanFull(),
-                                Forms\Components\Toggle::make('status')
-                                    ->label('Pubblicato')
-                                    ->default(false),
-                            ])->columns(2),
+        return $form->schema([
+            Layout::Columns::make([
+                // LEFT COLUMN (2/3) - Main content
+                Column::make([
+                    // Section 1: Basic Information
+                    Section::make('Informazioni Base')->schema([
+                        Grid::make(2)->schema([
+                            Components\TextInput::make('sku')
+                                ->label('SKU')
+                                ->required()
+                                ->unique(ignoreRecord: true)
+                                ->maxLength(50),
+                            Components\Select::make('brand_id')
+                                ->label('Brand')
+                                ->relationship('brand', 'name')
+                                ->searchable()
+                                ->preload(),
+                        ]),
+                        Grid::make(2)->schema([
+                            Components\Select::make('gender')
+                                ->label('Genere')
+                                ->options([
+                                    'male' => 'Uomo',
+                                    'female' => 'Donna',
+                                    'unisex' => 'Unisex',
+                                    'kids' => 'Bambini',
+                                ])
+                                ->nullable(),
+                            Components\Select::make('product_type')
+                                ->label('Tipo Prodotto')
+                                ->options([
+                                    'simple' => 'Semplice',
+                                    'variable' => 'Variabile',
+                                    'grouped' => 'Raggruppato',
+                                    'external' => 'Esterno/Affiliato',
+                                ])
+                                ->default('simple'),
+                        ]),
+                        Components\TextInput::make('name')
+                            ->label('Nome Prodotto')
+                            ->required()
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state)))
+                            ->maxLength(255),
+                        Components\Hidden::make('slug'),
+                        Components\Select::make('categories')
+                            ->label('Categorie')
+                            ->relationship('categories', 'name')
+                            ->multiple()
+                            ->searchable()
+                            ->preload(),
+                        Components\Textarea::make('short_description')
+                            ->label('Descrizione Breve')
+                            ->rows(2)
+                            ->maxLength(500),
+                        Components\RichEditor::make('description')
+                            ->label('Descrizione Completa'),
+                    ]),
 
-                        Forms\Components\Tabs\Tab::make('Prezzo')
-                            ->schema([
-                                Forms\Components\TextInput::make('price')
-                                    ->label('Prezzo (€)')
-                                    ->required()
-                                    ->numeric()
-                                    ->step(0.01),
-                                Forms\Components\TextInput::make('compare_price')
-                                    ->label('Prezzo originale (€)')
-                                    ->numeric()
-                                    ->step(0.01),
-                                Forms\Components\TextInput::make('cost_price')
-                                    ->label('Costo (€)')
-                                    ->numeric()
-                                    ->step(0.01),
-                            ])->columns(2),
+                    // Section 2: Pricing & Inventory
+                    Section::make('Prezzo e Inventario')->schema([
+                        Grid::make(3)->schema([
+                            Components\TextInput::make('price')
+                                ->label('Prezzo (€)')
+                                ->required()
+                                ->numeric()
+                                ->step(0.01)
+                                ->prefix('€'),
+                            Components\TextInput::make('compare_price')
+                                ->label('Prezzo Scontato (€)')
+                                ->numeric()
+                                ->step(0.01)
+                                ->prefix('€'),
+                            Components\TextInput::make('cost_price')
+                                ->label('Costo (€)')
+                                ->numeric()
+                                ->step(0.01)
+                                ->prefix('€'),
+                        ]),
+                        Grid::make(2)->schema([
+                            Components\TextInput::make('stock_quantity')
+                                ->label('Giacenza')
+                                ->numeric()
+                                ->default(0),
+                            Components\Toggle::make('track_stock')
+                                ->label('Traccia Inventario')
+                                ->default(true),
+                        ]),
+                    ]),
 
-                        Forms\Components\Tabs\Tab::make('Inventario')
-                            ->schema([
-                                Forms\Components\TextInput::make('stock_quantity')
-                                    ->label('Giacenza')
-                                    ->required()
-                                    ->numeric()
-                                    ->default(0),
-                                Forms\Components\Toggle::make('track_stock')
-                                    ->label('Traccia inventario')
-                                    ->default(true),
-                            ])->columns(2),
+                    // Section 3: Variants
+                    Section::make('Varianti Prodotto')->schema([
+                        Components\Toggle::make('has_variants')
+                            ->label('Questo prodotto ha varianti (taglia, colore, ecc.)')
+                            ->default(false)
+                            ->reactive(),
 
-                        Forms\Components\Tabs\Tab::make('Categorie')
-                            ->schema([
-                                Forms\Components\CheckboxList::make('categories')
-                                    ->relationship('categories', 'name')
-                                    ->columns(3)
-                                    ->searchable(),
+                        Grid::make(2)->schema([
+                            // Left: Option Builder
+                            Section::make('Configura Opzioni')->schema([
+                                Components\TextInput::make('variant_option_name')
+                                    ->label('Nome Opzione')
+                                    ->placeholder('Es. Taglia, Colore')
+                                    ->reactive(),
+                                Components\Textarea::make('variant_option_values')
+                                    ->label('Valori (uno per riga)')
+                                    ->placeholder('S
+M
+L
+XL')
+                                    ->rows(4)
+                                    ->reactive(),
+                                Button::make('add_variant_option')
+                                    ->label('Aggiungi Opzione')
+                                    ->action(function (array $data, Get $get, Set $set) {
+                                        $options = json_decode($get('variant_options_json') ?? '[]', true);
+                                        $name = trim($data['variant_option_name'] ?? '');
+                                        $values = array_filter(array_map('trim', explode("\n", $data['variant_option_values'] ?? '')), fn($v) => $v !== '');
+                                        if ($name && count($values)) {
+                                            $options[] = ['name' => $name, 'values' => array_values($values)];
+                                            $set('variant_options_json', json_encode(array_values($options)));
+                                            $set('variant_option_name', '');
+                                            $set('variant_option_values', '');
+                                        }
+                                    })
+                                    ->disabled(fn (Get $get) => empty($get('variant_option_name')) || empty($get('variant_option_values'))),
+                                Components\Hidden::make('variant_options_json'),
+                                ViewField::make('variant_options_display')
+                                    ->label('Opzioni Configurate')
+                                    ->view('filament.forms.components.variant-options-display'),
+                            ])->columns(1),
+
+                            // Right: Preview
+                            Section::make('Anteprima Varianti')->schema([
+                                ViewField::make('variants_preview')
+                                    ->view('filament.forms.components.variants-preview'),
                             ]),
+                        ])->visible(fn (Get $get) => $get('has_variants')),
 
-                        Forms\Components\Tabs\Tab::make('Immagini')
+                        // Manual variant entries
+                        Components\Repeater::make('variants')
+                            ->label('Varianti Manuali')
                             ->schema([
-                                Forms\Components\FileUpload::make('images')
-                                    ->multiple()
-                                    ->image()
-                                    ->directory('products/images')
-                                    ->maxSize(2048)
-                                    ->panelLayout('grid')
-                                    ->reorderable(),
-                            ]),
+                                Components\TextInput::make('sku')->label('SKU Variante')->required(),
+                                Components\TextInput::make('name')->label('Nome (es. Rosso - XL)')->required(),
+                                Components\TextInput::make('price')->label('Prezzo')->numeric()->prefix('€'),
+                                Components\TextInput::make('stock_quantity')->label('Giacenza')->numeric(),
+                                Components\TextInput::make('weight')->label('Peso (g)')->numeric(),
+                            ])->columns(3)
+                            ->visible(fn (Get $get) => $get('has_variants')),
+                    ]),
 
-                        Forms\Components\Tabs\Tab::make('Attributi')
-                            ->schema([
-                                Forms\Components\Repeater::make('attributes')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('name')
-                                            ->label('Nome attributo')
-                                            ->required(),
-                                        Forms\Components\Textarea::make('values')
-                                            ->label('Valori (separati da virgola)')
-                                            ->required(),
-                                    ])->columns(2),
-                            ]),
-                    ])->columnSpanFull(),
-            ]);
+                    // Section 4: SEO
+                    Section::make('SEO')->schema([
+                        Grid::make(2)->schema([
+                            Components\TextInput::make('meta_title')
+                                ->label('Meta Title')
+                                ->maxLength(60)
+                                ->live(),
+                            Components\TextInput::make('focus_keyword')
+                                ->label('Parola Chiave Focus')
+                                ->maxLength(100)
+                                ->live(),
+                        ]),
+                        Grid::make(2)->schema([
+                            Components\Textarea::make('meta_description')
+                                ->label('Meta Description')
+                                ->rows(3)
+                                ->maxLength(160)
+                                ->live(),
+                            ViewField::make('seo_score')
+                                ->label('Analisi SEO')
+                                ->view('filament.forms.components.seo-score'),
+                        ]),
+                        Components\TextInput::make('slug')
+                            ->label('URL Slug')
+                            ->unique(ignoreRecord: true),
+                    ]),
+
+                    // Section 5: Shipping
+                    Section::make('Spedizione')->schema([
+                        Grid::make(4)->schema([
+                            Components\TextInput::make('weight')
+                                ->label('Peso (kg)')
+                                ->numeric()
+                                ->step(0.001),
+                            Components\TextInput::make('length')
+                                ->label('Lunghezza (cm)')
+                                ->numeric()
+                                ->step(0.1),
+                            Components\TextInput::make('width')
+                                ->label('Larghezza (cm)')
+                                ->numeric()
+                                ->step(0.1),
+                            Components\TextInput::make('height')
+                                ->label('Altezza (cm)')
+                                ->numeric()
+                                ->step(0.1),
+                        ]),
+                        Grid::make(2)->schema([
+                            Components\Select::make('shipping_class')
+                                ->label('Classe Spedizione')
+                                ->options([
+                                    'standard' => 'Standard',
+                                    'express' => 'Express',
+                                    'oversized' => 'Over Size',
+                                    'fragile' => 'Fragile',
+                                ])
+                                ->nullable(),
+                            Components\Toggle::make('free_shipping')
+                                ->label('Spedizione Gratuita')
+                                ->default(false),
+                        ]),
+                    ]),
+                ])->width('2/3'),
+
+                // RIGHT COLUMN (1/3) - Sidebar
+                Column::make([
+                    // Visibility
+                    Section::make('Visibilità')->schema([
+                        Components\Toggle::make('status')
+                            ->label('Pubblicato')
+                            ->default(false),
+                        Components\DateTimePicker::make('published_at')
+                            ->label('Pubblicazione Programmata')
+                            ->nullable(),
+                        Grid::make(2)->schema([
+                            Components\Toggle::make('is_featured')
+                                ->label('In Evidenza')
+                                ->default(false),
+                            Components\Toggle::make('enable_reviews')
+                                ->label('Consenti Recensioni')
+                                ->default(true),
+                        ]),
+                    ]),
+
+                    // Images
+                    Section::make('Immagini Prodotto')->schema([
+                        Components\FileUpload::make('images')
+                            ->label('Galleria')
+                            ->multiple()
+                            ->image()
+                            ->directory('products/images')
+                            ->maxSize(5120)
+                            ->panelLayout('grid')
+                            ->reorderable()
+                            ->appendFiles(),
+                        ViewField::make('product_summary')
+                            ->label('Riepilogo')
+                            ->view('filament.forms.components.seo-sidebar-summary'),
+                    ]),
+
+                    // Labels
+                    Section::make('Etichette')->schema([
+                        Grid::make(2)->schema([
+                            Components\Toggle::make('is_new_arrival')
+                                ->label('Nuovo Arrivo')
+                                ->default(false),
+                            Components\Toggle::make('is_best_seller')
+                                ->label('Best Seller')
+                                ->default(false),
+                            Components\Toggle::make('is_featured_product')
+                                ->label('In Evidenza')
+                                ->default(false),
+                            Components\Toggle::make('is_on_sale')
+                                ->label('In Sconto')
+                                ->default(false),
+                            Components\Toggle::make('is_limited')
+                                ->label('Edizione Limitata')
+                                ->default(false),
+                            Components\Toggle::make('is_exclusive')
+                                ->label('Esclusivo')
+                                ->default(false),
+                        ]),
+                    ]),
+
+                    // Related Products
+                    Section::make('Prodotti Correlati')->schema([
+                        Components\Select::make('related_products')
+                            ->label('Seleziona Prodotti')
+                            ->relationship('relatedProducts', 'name')
+                            ->multiple()
+                            ->searchable()
+                            ->preload(),
+                    ]),
+                ])->width('1/3'),
+            ]),
+        ]);
     }
 
     public static function table(Table $table): Table
