@@ -30,7 +30,8 @@ class RecentOrders extends BaseWidget
                 Tables\Columns\TextColumn::make('total')
                     ->label('Importo')
                     ->money('EUR', locale: 'it_IT')
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Stato')
                     ->colors([
