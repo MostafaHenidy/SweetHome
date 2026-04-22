@@ -20,20 +20,20 @@ class RecentOrders extends BaseWidget
             ->paginated(10)
             ->columns([
                 Tables\Columns\TextColumn::make('order_number')
-                    ->label('Ordine')
+                    ->label(__('widgets.ordine'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('customer_name')
-                    ->label('Cliente')
+                    ->label(__('widgets.cliente'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total')
-                    ->label('Importo')
-                    ->money('EUR', locale: 'it_IT')
+                    ->label(__('widgets.importo'))
+                    ->money('EUR', locale: config('app.locale'))
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\BadgeColumn::make('status')
-                    ->label('Stato')
+                    ->label(__('widgets.stato'))
                     ->colors([
                         'warning' => 'pending',
                         'info' => 'processing',
@@ -42,7 +42,7 @@ class RecentOrders extends BaseWidget
                         'danger' => 'cancelled',
                     ]),
                 Tables\Columns\BadgeColumn::make('payment_status')
-                    ->label('Pagamento')
+                    ->label(__('widgets.pagamento'))
                     ->colors([
                         'warning' => 'pending',
                         'success' => 'paid',
@@ -50,18 +50,25 @@ class RecentOrders extends BaseWidget
                         'info' => 'refunded',
                     ]),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Data')
+                    ->label(__('widgets.data'))
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'pending' => 'In attesa',
-                        'processing' => 'In lavorazione',
-                        'shipped' => 'Spedito',
-                        'completed' => 'Completato',
-                        'cancelled' => 'Annullato',
+                        'pending' => __('widgets.in_attesa'),
+                        'processing' => __('widgets.in_lavorazione'),
+                        'shipped' => __('widgets.spedito'),
+                        'completed' => __('widgets.completato'),
+                        'cancelled' => __('widgets.annullato'),
+                    ]),
+                Tables\Filters\SelectFilter::make('payment_status')
+                    ->options([
+                        'pending' => __('widgets.in_attesa'),
+                        'paid' => __('widgets.pagato'),
+                        'failed' => __('widgets.fallito'),
+                        'refunded' => __('widgets.rimborsato'),
                     ]),
             ]);
     }
