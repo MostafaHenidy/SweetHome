@@ -7,13 +7,25 @@ use App\Models\Product;
 use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\DB;
 
 class StatsOverview extends BaseWidget
 {
+    private ?array $stats = null;
+
     protected function getStats(): array
     {
-        return [
-            Stat::make('Revenue', '€ ' . number_format(Order::where('payment_status', 'paid')->sum('total'), 2, ',', '.'))
+        if ($this->stats !== null) {
+            return $this->stats;
+        }
+
+        $revenue = DB::selectOne(
+            'SELECT COALESCE(SUM(total), 0) as value FROM orders WHERE payment_status = ?',
+            ['paid']
+        );
+
+        $this->stats = [
+            Stat::make('Revenue', '€ ' . number_format($revenue->value, 2, ',', '.'))
                 ->description('Totale incassato')
                 ->icon('heroicon-o-currency-euro'),
             Stat::make('Ordini', Order::count())
@@ -26,5 +38,7 @@ class StatsOverview extends BaseWidget
                 ->description('Totale prodotti')
                 ->icon('heroicon-o-shopping-bag'),
         ];
+
+        return $this->stats;
     }
 }
