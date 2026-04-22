@@ -13,7 +13,7 @@ class StatsOverview extends BaseWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Revenue', number_format(Order::where('payment_status', 'paid')->sum('total'), 2, ',', '.') . ' €')
+            Stat::make('Revenue', '€ ' . number_format(Order::where('payment_status', 'paid')->sum('total'), 2, ',', '.'))
                 ->description('Totale incassato')
                 ->icon('heroicon-o-currency-euro'),
             Stat::make('Ordini', Order::count())
