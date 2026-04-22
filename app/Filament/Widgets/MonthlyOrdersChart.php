@@ -20,11 +20,23 @@ class MonthlyOrdersChart extends ChartWidget
 
     protected function getData(): array
     {
-        $monthlyData = DB::table('orders')
-            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as order_count, COALESCE(SUM(total), 0) as revenue")
-            ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m')")
-            ->orderBy('month')
-            ->get();
+        // Get the database driver to use appropriate date formatting
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            $monthlyData = DB::table('orders')
+                ->selectRaw("strftime('%Y-%m', created_at) as month, COUNT(*) as order_count, COALESCE(SUM(total), 0) as revenue")
+                ->groupByRaw("strftime('%Y-%m', created_at)")
+                ->orderBy('month')
+                ->get();
+        } else {
+            // MySQL/PostgreSQL
+            $monthlyData = DB::table('orders')
+                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as order_count, COALESCE(SUM(total), 0) as revenue")
+                ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m')")
+                ->orderBy('month')
+                ->get();
+        }
 
         $months = [];
         $orderCounts = [];
