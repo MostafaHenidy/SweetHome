@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
@@ -34,6 +35,13 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
+        'address_line1',
+        'address_line2',
+        'city',
+        'province',
+        'postal_code',
+        'country',
+        'points_balance',
     ];
 
     /**
@@ -67,16 +75,35 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'points_balance' => 'integer',
         ];
     }
 
-    public function cartItems(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function cartItems(): HasMany
     {
         return $this->hasMany(CartItem::class);
     }
 
-    public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function pointsTransactions(): HasMany
+    {
+        return $this->hasMany(PointsTransaction::class);
+    }
+
+    public function couponUsages(): HasMany
+    {
+        return $this->hasMany(CouponUsage::class);
+    }
+
+    public function getPointsValueInEurosAttribute(): float
+    {
+        return app(\App\Services\PointsService::class)->convertPointsToEuros($this->points_balance ?? 0);
+    }
+    public function currentTeam(){
+        return $this->belongsTo(Team::class);
     }
 }

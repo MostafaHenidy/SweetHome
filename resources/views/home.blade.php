@@ -8,8 +8,8 @@
 <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
     <!-- Background Image -->
     <div class="absolute inset-0">
-        <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1920&q=80"
-             alt="Luxury living room"
+        <img src="{{asset('imgs/black-and-white-designing-sNwHCsDAT1c-unsplash.jpg')}}"
+             alt="Luxury interior with hardwood floors"
              class="w-full h-full object-cover">
         <div class="absolute inset-0 bg-gradient-to-r from-brand-dark/90 via-brand-dark/70 to-brand-dark/40"></div>
     </div>
@@ -17,19 +17,19 @@
     <!-- Hero Content -->
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
         <div class="max-w-2xl">
-            <p class="text-brand-gold text-sm tracking-[0.3em] uppercase mb-6">SweetHome Milano</p>
+            <p class="text-brand-gold text-sm tracking-[0.3em] uppercase mb-6">{{ \App\Support\Content::get('home_hero_eyebrow') }}</p>
             <h1 class="text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-brand-light leading-tight mb-6">
-                IL LUSSO<br>DI ABITARE.
+                {!! nl2br(e(\App\Support\Content::get('home_hero_title'))) !!}
             </h1>
             <p class="text-lg text-gray-300 leading-relaxed mb-10 max-w-lg">
-                Trasformiamo i tuoi spazi in ambienti unici e raffinati. Design d'interni di lusso, arredamento su misura e consulenza personalizzata.
+                {{ \App\Support\Content::get('home_hero_description') }}
             </p>
             <div class="flex flex-col sm:flex-row gap-4">
-                <a href="/shop" class="inline-flex items-center justify-center px-8 py-4 bg-brand-gold text-brand-dark text-sm font-semibold tracking-widest uppercase hover:bg-opacity-90 transition-all duration-300">
-                    Scopri la Collezione
+                <a href="{{ \App\Support\Content::get('home_hero_primary_url') }}" class="inline-flex items-center justify-center px-8 py-4 bg-brand-gold text-brand-dark text-sm font-semibold tracking-widest uppercase hover:bg-opacity-90 transition-all duration-300">
+                    {{ \App\Support\Content::get('home_hero_primary_label') }}
                 </a>
-                <a href="/projects" class="inline-flex items-center justify-center px-8 py-4 border border-white/30 text-brand-light text-sm font-semibold tracking-widest uppercase hover:border-brand-gold hover:text-brand-gold transition-all duration-300">
-                    I Nostri Progetti
+                <a href="{{ \App\Support\Content::get('home_hero_secondary_url') }}" class="inline-flex items-center justify-center px-8 py-4 border border-white/30 text-brand-light text-sm font-semibold tracking-widest uppercase hover:border-brand-gold hover:text-brand-gold transition-all duration-300">
+                    {{ \App\Support\Content::get('home_hero_secondary_label') }}
                 </a>
             </div>
         </div>
@@ -94,8 +94,8 @@
             <!-- Image -->
             <div class="relative">
                 <div class="aspect-[4/3] overflow-hidden rounded-sm">
-                    <img src="https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800&q=80"
-                         alt="Designer chair"
+                    <img src="https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=800&q=80"
+                         alt="Hardwood floor texture"
                          class="w-full h-full object-cover hover:scale-105 transition-transform duration-700">
                 </div>
                 <div class="absolute -bottom-6 -right-6 w-48 h-48 border border-brand-gold/30 rounded-sm -z-10 hidden lg:block"></div>
@@ -140,8 +140,8 @@
             <!-- Category 1: Soggiorno -->
             <a href="/shop?category=soggiorno" class="group relative overflow-hidden rounded-sm">
                 <div class="aspect-[4/3] overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=80"
-                         alt="Soggiorno"
+                    <img src="{{asset('imgs/mike-k-5jcKmzVsRnY-unsplash.jpg')}}"
+                         alt="Modern living room with large windows"
                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-brand-dark/90 via-brand-dark/30 to-transparent"></div>
@@ -154,8 +154,8 @@
             <!-- Category 2: Camera da Letto -->
             <a href="/shop?category=camera" class="group relative overflow-hidden rounded-sm">
                 <div class="aspect-[4/3] overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=600&q=80"
-                         alt="Camera da Letto"
+                    <img src="{{asset('imgs/steven-ungermann-CVTmLMv5oG4-unsplash.jpg')}}"
+                         alt="Bright bedroom with large windows"
                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-brand-dark/90 via-brand-dark/30 to-transparent"></div>
@@ -168,8 +168,8 @@
             <!-- Category 3: Cucina -->
             <a href="/shop?category=cucina" class="group relative overflow-hidden rounded-sm">
                 <div class="aspect-[4/3] overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80"
-                         alt="Cucina"
+                    <img src="{{asset('imgs/1.jpg')}}"
+                         alt="Modern kitchen with tile floor"
                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-brand-dark/90 via-brand-dark/30 to-transparent"></div>
@@ -182,8 +182,8 @@
             <!-- Category 4: Bagno -->
             <a href="/shop?category=bagno" class="group relative overflow-hidden rounded-sm">
                 <div class="aspect-[4/3] overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600&q=80"
-                         alt="Bagno"
+                    <img src="{{asset('imgs/2.jpg')}}"
+                         alt="Modern bathroom with tile floor"
                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-brand-dark/90 via-brand-dark/30 to-transparent"></div>
@@ -196,8 +196,8 @@
             <!-- Category 5: Ufficio -->
             <a href="/shop?category=ufficio" class="group relative overflow-hidden rounded-sm">
                 <div class="aspect-[4/3] overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&q=80"
-                         alt="Ufficio"
+                    <img src="{{asset('imgs/3.jpg')}}"
+                         alt="Home office with wooden floor"
                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-brand-dark/90 via-brand-dark/30 to-transparent"></div>
@@ -210,8 +210,8 @@
             <!-- Category 6: Esterno -->
             <a href="/shop?category=esterno" class="group relative overflow-hidden rounded-sm">
                 <div class="aspect-[4/3] overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80"
-                         alt="Esterno"
+                    <img src="{{asset('imgs/4.jpg')}}"
+                         alt="Outdoor terrace with elegant flooring"
                          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-brand-dark/90 via-brand-dark/30 to-transparent"></div>
@@ -230,9 +230,9 @@
 <section class="bg-brand-slate">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div class="text-center mb-16">
-            <p class="text-brand-gold text-sm tracking-[0.3em] uppercase mb-4">Cosa Offriamo</p>
+            <p class="text-brand-gold text-sm tracking-[0.3em] uppercase mb-4">{{ \App\Support\Content::get('home_services_eyebrow') }}</p>
             <h2 class="text-3xl md:text-4xl font-serif font-bold text-brand-light">
-                I nostri servizi
+                {{ \App\Support\Content::get('home_services_title') }}
             </h2>
         </div>
 
@@ -244,9 +244,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/>
                     </svg>
                 </div>
-                <h3 class="text-xl font-serif text-brand-light mb-3">Progettazione</h3>
+                <h3 class="text-xl font-serif text-brand-light mb-3">{{ \App\Support\Content::get('service_1_title') }}</h3>
                 <p class="text-sm text-gray-400 leading-relaxed mb-6">
-                    Creiamo progetti su misura che riflettono il tuo stile di vita, ottimizzando ogni spazio con eleganza e funzionalità.
+                    {{ \App\Support\Content::get('service_1_description') }}
                 </p>
                 <a href="/services" class="text-brand-gold text-sm font-semibold tracking-wider uppercase hover:text-brand-light transition">
                     Scopri di più &rarr;
@@ -260,9 +260,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819"/>
                     </svg>
                 </div>
-                <h3 class="text-xl font-serif text-brand-light mb-3">Arredamento Completo</h3>
+                <h3 class="text-xl font-serif text-brand-light mb-3">{{ \App\Support\Content::get('service_2_title') }}</h3>
                 <p class="text-sm text-gray-400 leading-relaxed mb-6">
-                    Dalla selezione dei materiali all'installazione finale, ci occupiamo di ogni aspetto per un risultato impeccabile.
+                    {{ \App\Support\Content::get('service_2_description') }}
                 </p>
                 <a href="/services" class="text-brand-gold text-sm font-semibold tracking-wider uppercase hover:text-brand-light transition">
                     Scopri di più &rarr;
@@ -276,12 +276,57 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/>
                     </svg>
                 </div>
-                <h3 class="text-xl font-serif text-brand-light mb-3">Consulenza Personalizzata</h3>
+                <h3 class="text-xl font-serif text-brand-light mb-3">{{ \App\Support\Content::get('service_3_title') }}</h3>
                 <p class="text-sm text-gray-400 leading-relaxed mb-6">
-                    I nostri esperti ti guidano nella scelta dei materiali, colori e finiture per creare l'ambiente perfetto.
+                    {{ \App\Support\Content::get('service_3_description') }}
                 </p>
                 <a href="/services" class="text-brand-gold text-sm font-semibold tracking-wider uppercase hover:text-brand-light transition">
                     Scopri di più &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- ============================================
+     SHOWROOM LOCATION
+     ============================================ --}}
+<section class="bg-brand-dark border-t border-white/5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
+            <div class="overflow-hidden rounded-sm border border-white/10 h-80 lg:h-auto lg:min-h-0 lg:self-stretch">
+                <iframe
+                    src="{{ \App\Support\Content::get('showroom_map_embed') }}"
+                    width="600"
+                    height="450"
+                    style="border:0;"
+                    allowfullscreen=""
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    title="Mappa dello showroom Sweet Home"
+                    class="w-full h-full">
+                </iframe>
+            </div>
+
+            <div class="lg:self-center">
+                <p class="text-brand-gold text-sm tracking-[0.3em] uppercase mb-4">{{ \App\Support\Content::get('showroom_eyebrow') }}</p>
+                <h2 class="text-3xl md:text-4xl font-serif font-bold text-brand-light mb-6">
+                    {{ \App\Support\Content::get('showroom_title') }}
+                </h2>
+                <p class="text-gray-400 leading-relaxed mb-4">
+                    {{ \App\Support\Content::get('showroom_description') }}
+                </p>
+                <p class="text-gray-400 leading-relaxed mb-8">
+                    {{ \App\Support\Content::get('showroom_extra_description') }}
+                </p>
+                <a href="{{ \App\Support\Content::get('showroom_map_url') }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="inline-flex items-center gap-2 text-brand-gold text-sm font-semibold tracking-widest uppercase hover:gap-4 transition-all duration-300">
+                    Apri su Google Maps
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
                 </a>
             </div>
         </div>
@@ -325,8 +370,8 @@
             <!-- Project 2 -->
             <a href="/projects/2" class="group relative overflow-hidden rounded-sm">
                 <div class="aspect-[16/10] overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80"
-                         alt="Attico Brera"
+                    <img src="https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800&q=80"
+                         alt="Bright room with large windows"
                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300"></div>
@@ -346,8 +391,8 @@
             <!-- Project 3 -->
             <a href="/projects/3" class="group relative overflow-hidden rounded-sm">
                 <div class="aspect-[16/10] overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80"
-                         alt="Loft Industriale"
+                    <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"
+                         alt="Premium hardwood floor close-up"
                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300"></div>

@@ -81,6 +81,18 @@ class OrderResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('markProcessing')
+                        ->label('Segna come In Lavorazione')
+                        ->action(fn($records) => $records->each->update(['status' => 'processing'])),
+                    Tables\Actions\BulkAction::make('markShipped')
+                        ->label('Segna come Spedito')
+                        ->action(fn($records) => $records->each->update(['status' => 'shipped'])),
+                    Tables\Actions\BulkAction::make('markCompleted')
+                        ->label('Segna come Completato')
+                        ->action(fn($records) => $records->each->update(['status' => 'completed'])),
+                    Tables\Actions\BulkAction::make('markCancelled')
+                        ->label('Segna come Annullato')
+                        ->action(fn($records) => $records->each->update(['status' => 'cancelled'])),
                 ]),
             ]);
     }

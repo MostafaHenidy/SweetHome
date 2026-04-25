@@ -8,7 +8,7 @@ class CartPage extends Component
 {
     public $cart = [];
 
-    protected $listeners = ['cart-updated' => 'refreshCart'];
+    protected $listeners = ['cart-updated' => 'refreshCart', 'coupon-updated' => 'refreshCart'];
 
     public function mount() { $this->refreshCart(); }
 
@@ -36,6 +36,16 @@ class CartPage extends Component
     public function getSubtotalProperty()
     {
         return collect($this->cart)->sum(fn($item) => $item['price'] * $item['quantity']);
+    }
+
+    public function getDiscountAmountProperty()
+    {
+        return (float) (session('coupon.discount') ?? 0);
+    }
+
+    public function getTotalProperty()
+    {
+        return max(0, $this->subtotal - $this->discountAmount);
     }
 
     public function render() { return view('livewire.cart-page'); }

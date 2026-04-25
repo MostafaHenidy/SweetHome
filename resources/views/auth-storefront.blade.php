@@ -2,7 +2,6 @@
 
 @section('content')
 <div class="min-h-screen flex flex-col lg:flex-row">
-    {{-- Left Side - Hero Image --}}
     <div class="hidden lg:flex lg:w-1/2 relative">
         <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200&q=80"
              alt="Luxury interior"
@@ -10,11 +9,9 @@
         <div class="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/30 to-transparent"></div>
     </div>
 
-    {{-- Right Side - Auth Forms Only --}}
-    <div class="w-full lg:w-1/2 bg-brand-dark flex flex-col items-center justify-start lg:justify-center px-6 pb-12 sm:px-8 sm:py-16"
+    <div class="w-full lg:w-1/2 bg-brand-dark flex flex-col items-center lg:justify-center px-6 py-12 sm:px-8 sm:py-16"
          x-data="{ tab: '{{ $defaultTab ?? 'login' }}', showForm: true }">
-        <div class="w-full max-w-md" style="padding-top: 180px;">
-            {{-- Tab Switcher --}}
+        <div class="w-full max-w-md" style="margin-top: 200px;">
             <div class="flex border-b border-white/10 mb-8 sm:mb-10">
                 <button @click="showForm = false; setTimeout(() => { tab = 'login'; showForm = true }, 300)"
                         :class="tab === 'login' ? 'text-brand-gold border-brand-gold' : 'text-gray-500 border-transparent hover:text-brand-light'"
@@ -28,7 +25,6 @@
                 </button>
             </div>
 
-            {{-- Form Container with Transition --}}
             <div x-show="showForm"
                  x-transition:enter="transition ease-out duration-500"
                  x-transition:enter-start="opacity-0 translate-y-4"
@@ -37,7 +33,6 @@
                  x-transition:leave-start="opacity-100 translate-y-0"
                  x-transition:leave-end="opacity-0 -translate-y-4">
 
-                {{-- Login Form --}}
                 <template x-if="tab === 'login'">
                     <form method="POST" action="{{ route('login') }}" class="space-y-5">
                         @csrf
@@ -74,7 +69,6 @@
                     </form>
                 </template>
 
-                {{-- Register Form --}}
                 <template x-if="tab === 'register'">
                     <form method="POST" action="{{ route('register') }}" class="space-y-5">
                         @csrf
@@ -90,6 +84,44 @@
                             <input type="email" name="email" required
                                    class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light placeholder-gray-500 text-sm rounded-sm focus:outline-none focus:border-brand-gold transition-colors">
                         </div>
+
+                        <div>
+                            <label class="block text-xs tracking-wider uppercase text-gray-400 mb-2">Telefono</label>
+                            <input type="tel" name="phone" required
+                                   class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light placeholder-gray-500 text-sm rounded-sm focus:outline-none focus:border-brand-gold transition-colors">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs tracking-wider uppercase text-gray-400 mb-2">Indirizzo</label>
+                            <input type="text" name="address_line1" required
+                                   class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light placeholder-gray-500 text-sm rounded-sm focus:outline-none focus:border-brand-gold transition-colors">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs tracking-wider uppercase text-gray-400 mb-2">Indirizzo 2 (opzionale)</label>
+                            <input type="text" name="address_line2"
+                                   class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light placeholder-gray-500 text-sm rounded-sm focus:outline-none focus:border-brand-gold transition-colors">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs tracking-wider uppercase text-gray-400 mb-2">Citta</label>
+                                <input type="text" name="city" required
+                                       class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light placeholder-gray-500 text-sm rounded-sm focus:outline-none focus:border-brand-gold transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-xs tracking-wider uppercase text-gray-400 mb-2">Provincia</label>
+                                <input type="text" name="province" required
+                                       class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light placeholder-gray-500 text-sm rounded-sm focus:outline-none focus:border-brand-gold transition-colors">
+                            </div>
+                            <div>
+                                <label class="block text-xs tracking-wider uppercase text-gray-400 mb-2">CAP</label>
+                                <input type="text" name="postal_code" required
+                                       class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light placeholder-gray-500 text-sm rounded-sm focus:outline-none focus:border-brand-gold transition-colors">
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="country" value="IT">
 
                         <div>
                             <label class="block text-xs tracking-wider uppercase text-gray-400 mb-2">Password</label>
@@ -110,9 +142,8 @@
                     </form>
                 </template>
 
-                {{-- Toggle Link --}}
                 <p class="mt-8 text-center text-sm text-gray-400">
-                    <span x-text="tab === 'login' ? 'Non hai un account?' : 'Hai già un account?'"></span>
+                    <span x-text="tab === 'login' ? 'Non hai un account?' : 'Hai gia un account?'"></span>
                     <button @click="showForm = false; setTimeout(() => { tab = tab === 'login' ? 'register' : 'login'; showForm = true }, 300)" class="text-brand-gold hover:text-brand-light transition font-semibold ml-1">
                         <span x-text="tab === 'login' ? 'Registrati' : 'Accedi'"></span>
                     </button>

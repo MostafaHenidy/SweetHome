@@ -54,11 +54,20 @@
                 <div class="lg:col-span-1">
                     <div class="bg-brand-slate/10 border border-white/5 rounded-sm p-6 sticky top-24">
                         <h2 class="text-lg font-serif text-brand-light mb-6">Riepilogo Ordine</h2>
+                        <div class="mb-6">
+                            @livewire('cart.coupon-input')
+                        </div>
                         <div class="space-y-3 mb-6">
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-400">Subtotale</span>
                                 <span class="text-brand-light">€{{ number_format($this->subtotal, 2, ',', '.') }}</span>
                             </div>
+                            @if($this->discountAmount > 0)
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-400">Sconto</span>
+                                    <span class="text-green-400">-€{{ number_format($this->discountAmount, 2, ',', '.') }}</span>
+                                </div>
+                            @endif
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-400">Spedizione</span>
                                 <span class="text-brand-light">Calcolata al checkout</span>
@@ -67,7 +76,7 @@
                         <div class="border-t border-white/10 pt-4 mb-6">
                             <div class="flex justify-between">
                                 <span class="text-base font-semibold text-brand-light">Totale</span>
-                                <span class="text-xl font-bold text-brand-gold">€{{ number_format($this->subtotal, 2, ',', '.') }}</span>
+                                <span class="text-xl font-bold text-brand-gold">€{{ number_format($this->total, 2, ',', '.') }}</span>
                             </div>
                         </div>
                         <a href="{{ route('checkout') }}" class="block w-full text-center px-6 py-3 bg-brand-gold text-brand-dark text-sm font-semibold tracking-widest uppercase hover:bg-opacity-90 transition rounded-sm">Procedi al Checkout</a>

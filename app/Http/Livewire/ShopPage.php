@@ -39,7 +39,7 @@ class ShopPage extends Component
 
     public function render()
     {
-        $query = Product::query()->published();
+        $query = Product::query()->published()->withActiveDiscounts()->with('activeCoupons');
 
         if ($this->search) {
             $query->where(function ($q) {
@@ -72,7 +72,7 @@ class ShopPage extends Component
             'price_desc' => $query->orderBy('price', 'desc'),
             'name_asc' => $query->orderBy('name', 'asc'),
             'name_desc' => $query->orderBy('name', 'desc'),
-            default => $query->latest(),
+            default => $query->orderByDiscounts()->latest(),
         };
 
         $products = $query->paginate(12);

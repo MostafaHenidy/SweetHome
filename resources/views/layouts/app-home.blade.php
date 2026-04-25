@@ -6,6 +6,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ $title ?? 'SweetHome Milano' }}</title>
+    @php($siteFavicon = \App\Models\Setting::get('site_favicon'))
+    @if($siteFavicon)
+        <link rel="icon" href="{{ '/storage/' . ltrim($siteFavicon, '/') }}">
+        <link rel="apple-touch-icon" href="{{ '/storage/' . ltrim($siteFavicon, '/') }}">
+    @endif
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -25,14 +30,15 @@
             <div class="flex justify-between h-20">
                 <!-- Logo -->
                 <div class="flex items-center">
-                    <a href="/" class="text-2xl font-serif tracking-widest uppercase text-brand-light">SweetHome</a>
+                    @include('partials.storefront-brand', ['logoClass' => 'h-10 w-auto'])
                 </div>
 
                 <!-- Desktop Navigation -->
                 <div class="hidden sm:flex sm:items-center sm:space-x-8">
                     <a href="/" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Home</a>
                     <a href="/shop" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Shop</a>
-                    <a href="/projects" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Progetti</a>
+                    <a href="/services" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Servizi</a>
+                    <a href="/contact" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Contatti</a>
                     <a href="/cart" class="relative group">
                         <svg class="w-6 h-6 hover:text-brand-gold transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
@@ -41,6 +47,11 @@
                             <span class="absolute -top-2 -right-2 bg-brand-gold text-brand-dark text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">{{ $cartCount }}</span>
                         @endif
                     </a>
+                    @auth
+                        <a href="{{ route('account.orders') }}" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Account</a>
+                    @else
+                        <a href="{{ route('auth') }}" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Accedi</a>
+                    @endauth
                 </div>
 
                 <!-- Mobile menu button -->
@@ -60,8 +71,14 @@
             <div class="px-4 py-4 space-y-3">
                 <a href="/" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Home</a>
                 <a href="/shop" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Shop</a>
-                <a href="/projects" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Progetti</a>
+                <a href="/services" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Servizi</a>
+                <a href="/contact" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Contatti</a>
                 <a href="/cart" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Carrello</a>
+                @auth
+                    <a href="{{ route('account.orders') }}" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Account</a>
+                @else
+                    <a href="{{ route('auth') }}" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Accedi</a>
+                @endauth
             </div>
         </div>
     </nav>
@@ -71,67 +88,7 @@
         @yield('content')
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-black border-t border-white/5">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
-                <!-- Brand -->
-                <div class="md:col-span-1">
-                    <a href="/" class="text-2xl font-serif tracking-widest uppercase text-brand-light">SweetHome</a>
-                    <p class="mt-4 text-sm text-gray-400 leading-relaxed">
-                        Design d'interni di lusso per chi cerca l'eccellenza nell'arredamento.
-                    </p>
-                </div>
-
-                <!-- Links -->
-                <div>
-                    <h4 class="text-sm font-semibold tracking-wider uppercase text-brand-gold mb-4">Navigazione</h4>
-                    <ul class="space-y-2">
-                        <li><a href="/" class="text-sm text-gray-400 hover:text-brand-light transition">Home</a></li>
-                        <li><a href="/shop" class="text-sm text-gray-400 hover:text-brand-light transition">Shop</a></li>
-                        <li><a href="/projects" class="text-sm text-gray-400 hover:text-brand-light transition">Progetti</a></li>
-                        <li><a href="/about" class="text-sm text-gray-400 hover:text-brand-light transition">Chi Siamo</a></li>
-                    </ul>
-                </div>
-
-                <!-- Contact -->
-                <div>
-                    <h4 class="text-sm font-semibold tracking-wider uppercase text-brand-gold mb-4">Contatti</h4>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li>Via Monte Napoleone, 8</li>
-                        <li>20121 Milano, Italia</li>
-                        <li class="pt-2"><a href="tel:+390212345678" class="hover:text-brand-light transition">+39 02 1234 5678</a></li>
-                        <li><a href="mailto:info@sweethome.it" class="hover:text-brand-light transition">info@sweethome.it</a></li>
-                    </ul>
-                </div>
-
-                <!-- Social -->
-                <div>
-                    <h4 class="text-sm font-semibold tracking-wider uppercase text-brand-gold mb-4">Seguici</h4>
-                    <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-brand-gold transition">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-brand-gold transition">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                        </a>
-                        <a href="#" class="text-gray-400 hover:text-brand-gold transition">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-t border-white/5 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-                <p class="text-xs text-gray-500">&copy; {{ date('Y') }} SweetHome Milano. Tutti i diritti riservati.</p>
-                <div class="flex space-x-6 mt-4 md:mt-0">
-                    <a href="#" class="text-xs text-gray-500 hover:text-gray-300 transition">Privacy Policy</a>
-                    <a href="#" class="text-xs text-gray-500 hover:text-gray-300 transition">Cookie Policy</a>
-                    <a href="#" class="text-xs text-gray-500 hover:text-gray-300 transition">Termini e Condizioni</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    @include('partials.storefront-footer')
 
     @livewireScripts
 </body>

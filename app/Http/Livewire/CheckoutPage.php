@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Services\CouponService;
 use Livewire\Component;
 
 class CheckoutPage extends Component
@@ -20,10 +21,14 @@ class CheckoutPage extends Component
     public $country = 'IT';
     public $payment_method = 'stripe';
     public $cart = [];
+    public $coupon_code = '';
+    public $applied_coupon = null;
+    public $coupon_error = '';
 
     public function mount()
     {
         $this->cart = session()->get('cart', []);
+        $this->applied_coupon = session()->get('coupon');
         if (empty($this->cart)) { redirect()->route('cart'); }
         if (auth()->check()) {
             $this->customer_name = auth()->user()->name;
@@ -47,6 +52,36 @@ class CheckoutPage extends Component
         $this->step++;
     }
 
+    public function applyCoupon(CouponService $couponService): void
+    {
+        $this->coupon_error = '';
+
+        try {
+            $coupon = $couponService->findValidCoupon($this->coupon_code, auth()->user(), $this->cart);
+            $discount = $couponService->calculateDiscount($coupon, $this->cart);
+
+            $this->applied_coupon = [
+                'id' => $coupon->id,
+                'code' => $coupon->code,
+                'discount' => $discount,
+            ];
+
+            session()->put('coupon', $this->applied_coupon);
+        } catch (\InvalidArgumentException $exception) {
+            $this->coupon_error = $exception->getMessage();
+            $this->applied_coupon = null;
+            session()->forget('coupon');
+        }
+    }
+
+    public function removeCoupon(): void
+    {
+        $this->coupon_code = '';
+        $this->coupon_error = '';
+        $this->applied_coupon = null;
+        session()->forget('coupon');
+    }
+
     public function placeOrder()
     {
         $this->validate([
@@ -61,6 +96,18 @@ class CheckoutPage extends Component
             'country' => 'required|string|max:2',
             'payment_method' => 'required|in:stripe,paypal,bank_transfer',
         ]);
+
+        $coupon = null;
+        $discount = 0;
+
+        if (! empty($this->applied_coupon['code'])) {
+            try {
+                $coupon = app(CouponService::class)->findValidCoupon($this->applied_coupon['code'], auth()->user(), $this->cart);
+                $discount = app(CouponService::class)->calculateDiscount($coupon, $this->cart);
+            } catch (\InvalidArgumentException) {
+                $this->removeCoupon();
+            }
+        }
 
         $order = Order::create([
             'order_number' => 'SH-' . date('Ymd') . '-' . str_pad(Order::count() + 1, 4, '0', STR_PAD_LEFT),
@@ -79,7 +126,10 @@ class CheckoutPage extends Component
             'subtotal' => $this->subtotal,
             'shipping_cost' => $this->shippingCost,
             'tax' => 0,
-            'total' => $this->total,
+            'coupon_id' => $coupon?->id,
+            'coupon_code' => $coupon?->code,
+            'discount_amount' => $discount,
+            'total' => max(0, $this->subtotal + $this->shippingCost - $discount),
             'payment_method' => $this->payment_method,
             'payment_status' => 'pending',
         ]);
@@ -97,8 +147,15 @@ class CheckoutPage extends Component
             ]);
         }
 
+        if ($coupon) {
+            app(CouponService::class)->applyCoupon($coupon, $order);
+        }
+
         session()->forget('cart');
-        redirect()->route('checkout.success', $order->order_number);
+        session()->forget('coupon');
+
+        redirect()->route('payment.initiate', $order->order_number)
+            ->with('payment_method', $this->payment_method);
     }
 
     public function getSubtotalProperty()
@@ -114,7 +171,12 @@ class CheckoutPage extends Component
 
     public function getTotalProperty()
     {
-        return $this->subtotal + $this->shippingCost;
+        return max(0, $this->subtotal + $this->shippingCost - $this->discountAmount);
+    }
+
+    public function getDiscountAmountProperty()
+    {
+        return (float) ($this->applied_coupon['discount'] ?? 0);
     }
 
     public function render() { return view('livewire.checkout-page'); }

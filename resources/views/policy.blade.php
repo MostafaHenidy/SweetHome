@@ -1,13 +1,11 @@
-<x-guest-layout>
-    <div class="pt-4 bg-gray-100">
-        <div class="min-h-screen flex flex-col items-center pt-6 sm:pt-0">
-            <div>
-                <x-authentication-card-logo />
-            </div>
+@extends('layouts.app-home')
 
-            <div class="w-full sm:max-w-2xl mt-6 p-6 bg-white shadow-md overflow-hidden sm:rounded-lg prose">
-                {!! $policy !!}
-            </div>
-        </div>
+@section('content')
+<section class="bg-brand-dark">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <article class="prose prose-invert max-w-none prose-headings:font-serif prose-a:text-brand-gold">
+            {!! \App\Support\Content::get('privacy_policy_content') !!}
+        </article>
     </div>
-</x-guest-layout>
+</section>
+@endsection

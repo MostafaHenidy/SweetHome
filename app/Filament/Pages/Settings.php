@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Setting;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Section;
@@ -10,11 +11,13 @@ use Filament\Pages\Page;
 use Filament\Forms\Form;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Components\Actions\Action;
+use Filament\Actions\Action;
+use Filament\Pages\Concerns\InteractsWithFormActions;
 
 class Settings extends Page implements HasForms
 {
     use InteractsWithForms;
+    use InteractsWithFormActions;
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
     protected static string $view = 'filament.pages.settings';
@@ -29,6 +32,8 @@ class Settings extends Page implements HasForms
             'site_email' => Setting::get('site_email', 'info@sweethome.it'),
             'site_phone' => Setting::get('site_phone', '328 899 5628'),
             'site_address' => Setting::get('site_address', 'Via Carlo Espinasse 104/a, 20156 Milano MI'),
+            'site_logo' => Setting::get('site_logo', null),
+            'site_favicon' => Setting::get('site_favicon', null),
             'vat_number' => Setting::get('vat_number', ''),
             'tax_code' => Setting::get('tax_code', ''),
             'shipping_cost' => Setting::get('shipping_cost', 0),
@@ -46,6 +51,20 @@ class Settings extends Page implements HasForms
                         TextInput::make('site_email')->label('Email'),
                         TextInput::make('site_phone')->label('Telefono'),
                         Textarea::make('site_address')->label('Indirizzo'),
+                        FileUpload::make('site_logo')
+                            ->label('Logo')
+                            ->image()
+                            ->disk('public')
+                            ->directory('branding')
+                            ->visibility('public')
+                            ->maxSize(2048),
+                        FileUpload::make('site_favicon')
+                            ->label('Favicon')
+                            ->image()
+                            ->disk('public')
+                            ->directory('branding')
+                            ->visibility('public')
+                            ->maxSize(1024),
                         TextInput::make('vat_number')->label('Partita IVA'),
                         TextInput::make('tax_code')->label('Codice Fiscale'),
                     ])->columns(2),
@@ -64,7 +83,10 @@ class Settings extends Page implements HasForms
         foreach ($data as $key => $value) {
             Setting::set($key, $value);
         }
-        $this->notify('success', 'Impostazioni salvate con successo.');
+        \Filament\Notifications\Notification::make()
+            ->title('Impostazioni salvate con successo.')
+            ->success()
+            ->send();
     }
 
     protected function getFormActions(): array

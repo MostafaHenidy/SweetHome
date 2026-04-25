@@ -20,6 +20,38 @@
             </div>
 
             <div class="mt-4">
+                <x-label for="phone" value="{{ __('Phone') }}" />
+                <x-input id="phone" class="block mt-1 w-full" type="tel" name="phone" :value="old('phone')" required autocomplete="tel" />
+            </div>
+
+            <div class="mt-4">
+                <x-label for="address_line1" value="{{ __('Address') }}" />
+                <x-input id="address_line1" class="block mt-1 w-full" type="text" name="address_line1" :value="old('address_line1')" required autocomplete="address-line1" />
+            </div>
+
+            <div class="mt-4">
+                <x-label for="address_line2" value="{{ __('Address 2') }}" />
+                <x-input id="address_line2" class="block mt-1 w-full" type="text" name="address_line2" :value="old('address_line2')" autocomplete="address-line2" />
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <x-label for="city" value="{{ __('City') }}" />
+                    <x-input id="city" class="block mt-1 w-full" type="text" name="city" :value="old('city')" required autocomplete="address-level2" />
+                </div>
+                <div>
+                    <x-label for="province" value="{{ __('Province') }}" />
+                    <x-input id="province" class="block mt-1 w-full" type="text" name="province" :value="old('province')" required autocomplete="address-level1" />
+                </div>
+                <div>
+                    <x-label for="postal_code" value="{{ __('Postal Code') }}" />
+                    <x-input id="postal_code" class="block mt-1 w-full" type="text" name="postal_code" :value="old('postal_code')" required autocomplete="postal-code" />
+                </div>
+            </div>
+
+            <input type="hidden" name="country" value="IT">
+
+            <div class="mt-4">
                 <x-label for="password" value="{{ __('Password') }}" />
                 <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
             </div>

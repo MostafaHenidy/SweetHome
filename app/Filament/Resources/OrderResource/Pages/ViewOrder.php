@@ -43,6 +43,13 @@ class ViewOrder extends ViewRecord
                     $record->update(['payment_status' => 'paid']);
                     $this->notify('success', 'Ordine segnato come pagato.');
                 }),
+            Actions\Action::make('sendStatusEmail')
+                ->label('Invia email stato')
+                ->icon('heroicon-o-envelope')
+                ->action(function (Order $record) {
+                    \App\Mail\OrderStatusChanged::dispatch($record, $record->status, $record->status);
+                    $this->notify('success', 'Email inviata');
+                }),
         ];
     }
 
