@@ -3,36 +3,245 @@
 @section('content')
 
 {{-- ============================================
-     HERO SECTION
+     HERO SECTION - CAROUSEL
      ============================================ --}}
-<section class="relative min-h-screen flex items-center justify-center overflow-hidden">
-    <!-- Background Image -->
+<section class="relative min-h-screen flex items-center justify-center overflow-hidden" x-data="{
+    active: 0,
+    touchStart: null,
+    slides: [
+        {
+            image: '{{asset('imgs/black-and-white-designing-sNwHCsDAT1c-unsplash.jpg')}}',
+            title: 'Design Italiano di Classe Mondiale',
+            subtitle: 'Arredamento su Misura',
+            description: 'Ogni pezzo creato su misura per i tuoi spazi, con attenzione ai dettagli e materiali pregiati.',
+            primaryText: 'Scopri le Collezioni',
+            primaryUrl: '/shop',
+            secondaryText: 'Contattaci',
+            secondaryUrl: '/contact'
+        },
+        {
+            image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=80',
+            title: 'Trasformiamo i Tuoi Spazi',
+            subtitle: 'Progettazione d\'Interni',
+            description: 'Il nostro team di designer ti guida in ogni fase, dalla concept alla realizzazione finale.',
+            primaryText: 'Vedi Progetti',
+            primaryUrl: '/projects',
+            secondaryText: 'Consulenza Gratuita',
+            secondaryUrl: '/contact'
+        },
+        {
+            image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1920&q=80',
+            title: 'Eleganza Senza Tempo',
+            subtitle: 'Materiali di Prima Qualità',
+            description: 'Selezioniamo solo i migliori materiali italiani e internazionali per garantire eccellenza.',
+            primaryText: 'Esplora Materiali',
+            primaryUrl: '/materials',
+            secondaryText: 'Richiedi Preventivo',
+            secondaryUrl: '/quote'
+        },
+        {
+            image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1920&q=80',
+            title: 'Armonia in Ogni Dettaglio',
+            subtitle: 'Design Contemporaneo',
+            description: 'Bilancio perfetto tra tradizione artigianale e innovazione moderna per ambienti unici.',
+            primaryText: 'Scopri di Più',
+            primaryUrl: '/about',
+            secondaryText: 'Richiedi Consulenza',
+            secondaryUrl: '/contact'
+        },
+        {
+            image: 'https://images.unsplash.com/photo-1615529328331-f8917597711f?w=1920&q=80',
+            title: 'Il Tuo Stile, la Tua Casa',
+            subtitle: 'Arredamento Personalizzato',
+            description: 'Creiamo insieme lo spazio che rispecchia la tua personalita e il tuo stile di vita.',
+            primaryText: 'Inizia il Progetto',
+            primaryUrl: '/quote',
+            secondaryText: 'Vedi Portfolio',
+            secondaryUrl: '/projects'
+        }
+    ],
+    timer: null,
+    init() {
+        this.start();
+    },
+    start() {
+        if (this.timer) return;
+        this.timer = setInterval(() => {
+            this.next();
+        }, 6000);
+    },
+    stop() {
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+    },
+    next() {
+        this.active = (this.active + 1) % this.slides.length;
+    },
+    prev() {
+        this.active = (this.active - 1 + this.slides.length) % this.slides.length;
+    },
+    go(index) {
+        this.active = index;
+    },
+    handleTouchEnd(event) {
+        if (!this.touchStart) return;
+
+        const touchEnd = event.changedTouches[0].clientX;
+        const diff = this.touchStart - touchEnd;
+        const threshold = 50;
+
+        if (Math.abs(diff) > threshold) {
+            if (diff > 0) {
+                this.next(); // Swipe left - go to next
+            } else {
+                this.prev(); // Swipe right - go to previous
+            }
+        }
+
+        this.touchStart = null;
+    }
+}" @mouseenter="stop()" @mouseleave="start()">
+
+    <!-- Carousel Slides Container -->
     <div class="absolute inset-0">
-        <img src="{{asset('imgs/black-and-white-designing-sNwHCsDAT1c-unsplash.jpg')}}"
-             alt="Luxury interior with hardwood floors"
-             class="w-full h-full object-cover">
-        <div class="absolute inset-0 bg-gradient-to-r from-brand-dark/90 via-brand-dark/70 to-brand-dark/40"></div>
+        <template x-for="(slide, index) in slides" :key="index">
+            <div class="absolute inset-0 transition-all duration-700 ease-in-out"
+                 x-show="active === index"
+                 x-transition:enter="transition-all duration-700 ease-in-out"
+                 x-transition:enter-start="opacity-0 scale-105"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition-all duration-700 ease-in-out"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-105">
+
+                <!-- Background Image with subtle zoom effect -->
+                <div class="absolute inset-0 transform transition-transform duration-7000 ease-out"
+                     x-show="active === index"
+                     x-transition:enter="transition-transform duration-7000 ease-out"
+                     x-transition:enter-start="scale-100"
+                     x-transition:enter-end="scale-110">
+                    <img :src="slide.image"
+                         :alt="slide.title"
+                         class="w-full h-full object-cover">
+                </div>
+
+                <!-- Reduced dark overlay - much lighter gradient -->
+                <div class="absolute inset-0 bg-gradient-to-r from-brand-dark/70 via-brand-dark/50 to-brand-dark/30"></div>
+            </div>
+        </template>
     </div>
 
-    <!-- Hero Content -->
-    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+    <!-- Hero Content with sequential animations -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 w-full"
+         @touchstart="touchStart = $event.touches[0].clientX"
+         @touchend="handleTouchEnd">
         <div class="max-w-2xl">
-            <p class="text-brand-gold text-sm tracking-[0.3em] uppercase mb-6">{{ \App\Support\Content::get('home_hero_eyebrow') }}</p>
-            <h1 class="text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-brand-light leading-tight mb-6">
-                {!! nl2br(e(\App\Support\Content::get('home_hero_title'))) !!}
-            </h1>
-            <p class="text-lg text-gray-300 leading-relaxed mb-10 max-w-lg">
-                {{ \App\Support\Content::get('home_hero_description') }}
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4">
-                <a href="{{ \App\Support\Content::get('home_hero_primary_url') }}" class="inline-flex items-center justify-center px-8 py-4 bg-brand-gold text-brand-dark text-sm font-semibold tracking-widest uppercase hover:bg-opacity-90 transition-all duration-300">
-                    {{ \App\Support\Content::get('home_hero_primary_label') }}
-                </a>
-                <a href="{{ \App\Support\Content::get('home_hero_secondary_url') }}" class="inline-flex items-center justify-center px-8 py-4 border border-white/30 text-brand-light text-sm font-semibold tracking-widest uppercase hover:border-brand-gold hover:text-brand-gold transition-all duration-300">
-                    {{ \App\Support\Content::get('home_hero_secondary_label') }}
-                </a>
-            </div>
+            <template x-for="(slide, index) in slides" :key="index">
+                <div class="transition-all duration-700 ease-in-out"
+                     x-show="active === index"
+                     x-transition:enter="transition-all duration-700 ease-in-out"
+                     x-transition:enter-start="opacity-0 transform translate-x-8"
+                     x-transition:enter-end="opacity-100 transform translate-x-0"
+                     x-transition:leave="transition-all duration-300 ease-in-out"
+                     x-transition:leave-start="opacity-100 transform translate-x-0"
+                     x-transition:leave-end="opacity-0 transform -translate-x-8">
+
+                    <!-- Subtitle/Eyebrow with staggered animation -->
+                    <div class="overflow-hidden">
+                        <p class="text-brand-gold text-sm tracking-[0.3em] uppercase mb-6 transform transition-all duration-500 delay-100"
+                           x-show="active === index"
+                           x-transition:enter="transition-all duration-500 delay-100"
+                           x-transition:enter-start="opacity-0 transform translate-y-4"
+                           x-transition:enter-end="opacity-100 transform translate-y-0">
+                            <span x-text="slide.subtitle"></span>
+                        </p>
+                    </div>
+
+                    <!-- Title with staggered animation -->
+                    <div class="overflow-hidden">
+                        <h1 class="text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-brand-light leading-tight mb-6 transform transition-all duration-500 delay-200"
+                            x-show="active === index"
+                            x-transition:enter="transition-all duration-500 delay-200"
+                            x-transition:enter-start="opacity-0 transform translate-y-6"
+                            x-transition:enter-end="opacity-100 transform translate-y-0">
+                            <span x-text="slide.title"></span>
+                        </h1>
+                    </div>
+
+                    <!-- Description with staggered animation -->
+                    <div class="overflow-hidden">
+                        <p class="text-lg text-gray-300 leading-relaxed mb-10 max-w-lg transform transition-all duration-500 delay-300"
+                           x-show="active === index"
+                           x-transition:enter="transition-all duration-500 delay-300"
+                           x-transition:enter-start="opacity-0 transform translate-y-4"
+                           x-transition:enter-end="opacity-100 transform translate-y-0">
+                            <span x-text="slide.description"></span>
+                        </p>
+                    </div>
+
+                    <!-- Buttons with staggered animation -->
+                    <div class="overflow-hidden">
+                        <div class="flex flex-col sm:flex-row gap-4 transform transition-all duration-500 delay-400"
+                             x-show="active === index"
+                             x-transition:enter="transition-all duration-500 delay-400"
+                             x-transition:enter-start="opacity-0 transform translate-y-4"
+                             x-transition:enter-end="opacity-100 transform translate-y-0">
+                            <a :href="slide.primaryUrl"
+                               class="inline-flex items-center justify-center px-8 py-4 bg-brand-gold text-brand-dark text-sm font-semibold tracking-widest uppercase hover:bg-opacity-90 transition-all duration-300">
+                                <span x-text="slide.primaryText"></span>
+                            </a>
+                            <a :href="slide.secondaryUrl"
+                               class="inline-flex items-center justify-center px-8 py-4 border border-white/30 text-brand-light text-sm font-semibold tracking-widest uppercase hover:border-brand-gold hover:text-brand-gold transition-all duration-300">
+                                <span x-text="slide.secondaryText"></span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </template>
         </div>
+    </div>
+
+    <!-- Navigation Dots -->
+    <div class="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
+        <template x-for="(slide, index) in slides" :key="index">
+            <button type="button"
+                    @click="go(index)"
+                    class="hero-nav-dot h-2 rounded-full transition-all duration-300"
+                    :class="active === index ? 'w-8 bg-brand-gold' : 'w-2 bg-white/40 hover:bg-white/60'"
+                    :aria-label="'Go to slide ' + (index + 1)">
+            </button>
+        </template>
+    </div>
+
+    <!-- Slide Counter -->
+    <div class="absolute bottom-24 left-8 z-20">
+        <div class="slide-counter text-white/60 text-sm tracking-widest">
+            <span class="text-brand-gold font-semibold" x-text="String(active + 1).padStart(2, '0')"></span>
+            <span class="mx-2">/</span>
+            <span x-text="String(slides.length).padStart(2, '0')"></span>
+        </div>
+    </div>
+
+    <!-- Previous/Next Navigation -->
+    <div class="absolute bottom-24 right-8 z-20 flex items-center gap-3">
+        <button type="button"
+                @click="prev()"
+                class="w-11 h-11 inline-flex items-center justify-center border border-white/20 text-brand-light hover:border-brand-gold hover:text-brand-gold transition-all duration-300 rounded-sm backdrop-blur-sm bg-brand-dark/30"
+                aria-label="Slide precedente">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        <button type="button"
+                @click="next()"
+                class="w-11 h-11 inline-flex items-center justify-center border border-white/20 text-brand-light hover:border-brand-gold hover:text-brand-gold transition-all duration-300 rounded-sm backdrop-blur-sm bg-brand-dark/30"
+                aria-label="Slide successiva">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Scroll Indicator -->
@@ -287,6 +496,144 @@
         </div>
     </div>
 </section>
+
+{{-- ============================================
+     REVIEWS CAROUSEL
+     ============================================ --}}
+@if($featuredReviews->count() > 0)
+<section class="bg-brand-dark border-t border-white/5 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
+            <div>
+                <p class="text-brand-gold text-sm tracking-[0.3em] uppercase mb-4">Recensioni</p>
+                <h2 class="text-3xl md:text-4xl font-serif font-bold text-brand-light">
+                    Cosa dicono i nostri clienti
+                </h2>
+            </div>
+            <p class="text-sm text-gray-400 max-w-md md:text-right">
+                Esperienze reali selezionate dal nostro team dopo l'approvazione.
+            </p>
+        </div>
+
+        <div x-data="{
+                active: 0,
+                count: {{ $featuredReviews->count() }},
+                visible: 1,
+                timer: null,
+                setVisible() {
+                    if (window.innerWidth >= 1024) {
+                        this.visible = Math.min(3, this.count);
+                    } else if (window.innerWidth >= 768) {
+                        this.visible = Math.min(2, this.count);
+                    } else {
+                        this.visible = 1;
+                    }
+
+                    this.active = Math.min(this.active, this.maxIndex());
+                },
+                maxIndex() {
+                    return Math.max(this.count - this.visible, 0);
+                },
+                start() {
+                    if (this.timer) return;
+                    if (this.count <= this.visible) return;
+                    this.timer = setInterval(() => this.next(), 5000);
+                },
+                stop() {
+                    if (this.timer) {
+                        clearInterval(this.timer);
+                        this.timer = null;
+                    }
+                },
+                next() {
+                    this.active = this.active >= this.maxIndex() ? 0 : this.active + 1;
+                },
+                prev() {
+                    this.active = this.active <= 0 ? this.maxIndex() : this.active - 1;
+                },
+                go(index) {
+                    this.active = Math.min(index, this.maxIndex());
+                }
+            }"
+            x-init="setVisible(); start()"
+            @resize.window="setVisible(); stop(); start()"
+            @mouseenter="stop()"
+            @mouseleave="start()"
+            class="relative">
+            <div class="overflow-hidden -mx-3">
+                <div class="flex transition-transform duration-700 ease-out"
+                     :style="`transform: translateX(-${active * (100 / visible)}%);`">
+                    @foreach($featuredReviews as $review)
+                        <article class="w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-3">
+                            <div class="h-full min-h-[21rem] bg-brand-slate/80 border border-white/10 rounded-sm p-6 sm:p-7 flex flex-col justify-between shadow-2xl shadow-black/10 transition duration-300 hover:border-brand-gold/40">
+                                <div>
+                                    <div class="flex items-center justify-between gap-4 mb-6">
+                                        <div class="flex text-brand-gold">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <svg class="w-4 h-4 {{ $i <= $review->rating ? 'fill-current' : 'text-gray-600' }}" viewBox="0 0 20 20">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                </svg>
+                                            @endfor
+                                        </div>
+                                        <span class="text-5xl leading-none font-serif text-brand-gold/20">"</span>
+                                    </div>
+
+                                    <p class="text-base text-gray-200 leading-relaxed">
+                                        {{ $review->comment ?: 'Esperienza eccellente con SweetHome Milano.' }}
+                                    </p>
+                                </div>
+
+                                <div class="pt-7 mt-7 border-t border-white/10">
+                                    <p class="text-brand-light text-sm font-semibold tracking-widest uppercase">{{ $review->user_name }}</p>
+                                    @if($review->product)
+                                        <a href="{{ route('product.show', $review->product->slug) }}" class="mt-2 block text-sm text-gray-400 hover:text-brand-gold transition">
+                                            {{ $review->product->name }}
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+            </div>
+
+            @if($featuredReviews->count() > 1)
+                <div class="flex items-center justify-between gap-6 mt-8">
+                    <div class="flex items-center gap-3">
+                        @foreach($featuredReviews as $index => $review)
+                            <button type="button"
+                                    x-show="{{ $index }} <= maxIndex()"
+                                    @click="go({{ $index }})"
+                                    class="h-2 rounded-full transition-all duration-300"
+                                    :class="active === {{ $index }} ? 'w-8 bg-brand-gold' : 'w-2 bg-white/20 hover:bg-white/40'"
+                                    aria-label="Mostra gruppo recensioni {{ $index + 1 }}"></button>
+                        @endforeach
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button type="button"
+                                @click="prev()"
+                                class="w-11 h-11 inline-flex items-center justify-center border border-white/10 text-brand-light hover:border-brand-gold hover:text-brand-gold transition rounded-sm"
+                                aria-label="Recensioni precedenti">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <button type="button"
+                                @click="next()"
+                                class="w-11 h-11 inline-flex items-center justify-center border border-white/10 text-brand-light hover:border-brand-gold hover:text-brand-gold transition rounded-sm"
+                                aria-label="Recensioni successive">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+</section>
+@endif
 
 {{-- ============================================
      SHOWROOM LOCATION

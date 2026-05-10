@@ -67,6 +67,14 @@
                                     <span class="text-gray-400">Sconto</span>
                                     <span class="text-green-400">-€{{ number_format($this->discountAmount, 2, ',', '.') }}</span>
                                 </div>
+                            @else
+                                {{-- Debug: Show when discount is 0 --}}
+                                {{-- @if(config('app.debug'))
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400">Sconto (debug)</span>
+                                        <span class="text-red-400">{{ $this->discountAmount }}</span>
+                                    </div>
+                                @endif --}}
                             @endif
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-400">Spedizione</span>
@@ -79,7 +87,9 @@
                                 <span class="text-xl font-bold text-brand-gold">€{{ number_format($this->total, 2, ',', '.') }}</span>
                             </div>
                         </div>
-                        <a href="{{ route('checkout') }}" class="block w-full text-center px-6 py-3 bg-brand-gold text-brand-dark text-sm font-semibold tracking-widest uppercase hover:bg-opacity-90 transition rounded-sm">Procedi al Checkout</a>
+                        <a href="{{ route('checkout') }}" class="block w-full text-center px-6 py-3 bg-brand-gold text-brand-dark text-sm font-semibold tracking-widest uppercase hover:bg-opacity-90 transition rounded-sm mb-3">Procedi al Checkout</a>
+                        <a href="{{ route('request-quote') }}" class="block w-full text-center px-6 py-3 bg-blue-600 text-white text-sm font-semibold tracking-widest uppercase hover:bg-blue-700 transition rounded-sm">Richiedi Preventivo</a>
+                        <p class="text-xs text-gray-400 text-center mt-3">Checkout per acquisto diretto, Preventivo per preventivo personalizzato</p>
                     </div>
                 </div>
             </div>

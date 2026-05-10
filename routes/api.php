@@ -9,6 +9,8 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+// Cart API moved to web.php for session support
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/points', [PointsController::class, 'index']);
     Route::get('/user/points/transactions', [PointsController::class, 'transactions']);

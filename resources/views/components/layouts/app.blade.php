@@ -28,13 +28,51 @@
                     <a href="/shop" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Shop</a>
                     <a href="/services" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Servizi</a>
                     <a href="/contact" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Contatti</a>
-                    <a href="/cart" class="relative group">
-                        <svg class="w-6 h-6 hover:text-brand-gold transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="/cart" class="relative group" x-data="{ cartBounce: false }" @cart-updated.window="cartBounce = true; setTimeout(() => cartBounce = false, 500)">
+                        <svg :class="cartBounce ? 'bounce' : ''" class="cart-count w-6 h-6 hover:text-brand-gold transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
+                        @if(session('cart') && count(session('cart', [])) > 0)
+                        <span x-show="cartBounce" x-cloak class="absolute -top-2 -right-2 bg-brand-gold text-brand-dark text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold cart-count" :class="cartBounce ? 'bounce' : ''">
+                            {{ count(session('cart', [])) }}
+                        </span>
+                        @endif
                     </a>
                     @auth
-                        <a href="{{ route('account.orders') }}" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Account</a>
+                        <div x-data="{ open: false }" class="relative">
+                            <button @click="open = !open"
+                                    class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300 flex items-center gap-1">
+                                {{ Auth::user()->name }}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open"
+                                 @click.away="open = false"
+                                 x-cloak
+                                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                <a href="{{ route('account.orders') }}"
+                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-dark">
+                                    {{ __('My Account') }}
+                                </a>
+                                <a href="{{ route('account.profile') }}"
+                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-dark">
+                                    {{ __('Profile') }}
+                                </a>
+                                <a href="{{ route('account.favorites') }}"
+                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-dark">
+                                    {{ __('Favorites') }}
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
+                                <form method="POST" action="{{ route('logout') }}" x-data>
+                                    @csrf
+                                    <button type="submit"
+                                            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-dark">
+                                        {{ __('Log Out') }}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     @else
                         <a href="{{ route('auth') }}" class="text-sm tracking-wider uppercase hover:text-brand-gold transition-colors duration-300">Accedi</a>
                     @endauth
@@ -57,7 +95,18 @@
                 <a href="/contact" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Contatti</a>
                 <a href="/cart" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Carrello</a>
                 @auth
-                    <a href="{{ route('account.orders') }}" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Account</a>
+                    <div class="border-t border-white/10 pt-3 mt-3">
+                        <div class="text-sm text-gray-400 mb-2">{{ Auth::user()->name }}</div>
+                        <a href="{{ route('account.orders') }}" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">My Account</a>
+                        <a href="{{ route('account.profile') }}" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Profile</a>
+                        <a href="{{ route('account.favorites') }}" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Favorites</a>
+                        <form method="POST" action="{{ route('logout') }}" x-data>
+                            @csrf
+                            <button type="submit" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition text-left w-full">
+                                Log Out
+                            </button>
+                        </form>
+                    </div>
                 @else
                     <a href="{{ route('auth') }}" class="block text-sm tracking-wider uppercase hover:text-brand-gold transition">Accedi</a>
                 @endauth

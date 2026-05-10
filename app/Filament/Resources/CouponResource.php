@@ -6,17 +6,22 @@ use App\Filament\Resources\CouponResource\Pages;
 use App\Models\Coupon;
 use App\Models\Product;
 use App\Services\CouponService;
+use App\Services\QRCodeService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CouponResource extends Resource
 {
     protected static ?string $model = Coupon::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-ticket';
+
     protected static ?string $navigationGroup = 'Loyalty';
 
     public static function form(Form $form): Form
@@ -29,7 +34,7 @@ class CouponResource extends Resource
                 ->suffixAction(
                     Forms\Components\Actions\Action::make('generate')
                         ->icon('heroicon-o-sparkles')
-                        ->action(fn (Forms\Set $set) => $set('code', 'SH-' . strtoupper(Str::random(8))))
+                        ->action(fn (Forms\Set $set) => $set('code', 'SH-'.strtoupper(Str::random(8))))
                 ),
             Forms\Components\Select::make('type')
                 ->options([
@@ -72,7 +77,11 @@ class CouponResource extends Resource
                 Tables\Columns\TextColumn::make('value')->sortable(),
                 Tables\Columns\TextColumn::make('usage_label')
                     ->label('Usi')
-                    ->state(fn (Coupon $record): string => $record->used_count . ' / ' . ($record->max_uses ?? '∞')),
+                    ->state(fn ($record): string => $record ? ($record->used_count.' / '.($record->max_uses ?? '∞')) : ''),
+                Tables\Columns\TextColumn::make('qr_tokens_count')
+                    ->label('QR Token')
+                    ->state(fn ($record): int => $record ? $record->qrTokens()->valid()->count() : 0)
+                    ->visible(fn ($record): bool => $record && $record->type === 'fixed_points'),
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
                         'success' => 'active',
@@ -81,6 +90,13 @@ class CouponResource extends Resource
                         'danger' => ['expired', 'exhausted'],
                     ]),
                 Tables\Columns\IconColumn::make('is_active')->boolean(),
+                Tables\Columns\BadgeColumn::make('qr_available')
+                    ->label('QR Code')
+                    ->state(fn ($record): string => $record && $record->type === 'fixed_points' ? 'Disponibile' : 'N/A')
+                    ->colors([
+                        'success' => 'Disponibile',
+                        'gray' => 'N/A',
+                    ]),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('type')->options([
@@ -92,9 +108,27 @@ class CouponResource extends Resource
             ])
             ->actions([
                 Tables\Actions\Action::make('toggle')
-                    ->label(fn (Coupon $record): string => $record->is_active ? 'Disattiva' : 'Attiva')
+                    ->label(fn ($record): string => $record ? ($record->is_active ? 'Disattiva' : 'Attiva') : '')
                     ->icon('heroicon-o-power')
-                    ->action(fn (Coupon $record) => $record->update(['is_active' => ! $record->is_active])),
+                    ->action(fn ($record) => $record?->update(['is_active' => ! $record->is_active])),
+                Tables\Actions\Action::make('generate_qr')
+                    ->label('Genera QR Code')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('warning')
+                    ->visible(fn ($record): bool => $record && $record->type === 'fixed_points')
+                    ->action(function ($record) {
+                        if (! $record) {
+                            return null;
+                        }
+                        $qrService = app(QRCodeService::class);
+
+                        return $qrService->getQRCodeBase64($record);
+                    })
+                    ->modalHeading('QR Code per Coupon')
+                    ->modalContent(fn ($record) => $record ? view('filament.components.qr-code-modal', [
+                        'coupon' => $record,
+                        'qrCode' => app(QRCodeService::class)->getQRCodeBase64($record),
+                    ]) : null),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
@@ -123,6 +157,56 @@ class CouponResource extends Resource
                         ])
                         ->action(fn (array $data) => app(CouponService::class)->bulkGenerate($data)),
                 ]),
+                Tables\Actions\BulkAction::make('export_qr_codes')
+                    ->label('Esporta QR Code')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Esporta QR Code')
+                    ->modalDescription('Seleziona il formato di esportazione per i QR code dei coupon selezionati.')
+                    ->form([
+                        Forms\Components\Select::make('format')
+                            ->label('Formato esportazione')
+                            ->options([
+                                'html' => 'HTML (consigliato - include le immagini QR)',
+                                'text' => 'Testo (formato semplice)',
+                            ])
+                            ->default('html')
+                            ->required()
+                            ->helperText('HTML può essere stampato come PDF dal browser'),
+                        Forms\Components\TextInput::make('filename')
+                            ->label('Nome file')
+                            ->default('qr-coupons-'.date('Y-m-d'))
+                            ->required(),
+                    ])
+                    ->action(function (array $data, Collection $records) {
+                        // Validate that at least one coupon is selected
+                        if ($records->isEmpty()) {
+                            throw ValidationException::withMessages([
+                                'format' => 'Seleziona almeno un coupon per esportare i QR code.',
+                            ]);
+                        }
+
+                        // Filter for fixed_points type
+                        $fixedPointsCoupons = $records->filter(fn ($c) => $c->type === 'fixed_points');
+
+                        if ($fixedPointsCoupons->isEmpty()) {
+                            throw ValidationException::withMessages([
+                                'format' => 'Nessun coupon di tipo "Punti fissi" selezionato. '.
+                                           'Solo i coupon con punti fissi possono avere QR code.',
+                            ]);
+                        }
+
+                        // Get the IDs of fixed_points coupons
+                        $couponIds = $fixedPointsCoupons->pluck('id')->toArray();
+
+                        // Redirect to download route
+                        return redirect()->route('admin.coupons.export-qr', [
+                            'coupon_ids' => $couponIds,
+                            'format' => $data['format'],
+                            'filename' => $data['filename'],
+                        ]);
+                    }),
             ]);
     }
 

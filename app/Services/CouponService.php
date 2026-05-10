@@ -74,6 +74,16 @@ class CouponService
             ? ($target instanceof Order ? $this->orderProductSubtotal($target, (int) $coupon->product_id) : $this->cartProductSubtotal($target, (int) $coupon->product_id))
             : $subtotal;
 
+        // Debug: Log the calculation inputs
+        \Log::info('CouponService calculateDiscount inputs:', [
+            'coupon_type' => $coupon->type,
+            'coupon_value' => $coupon->value,
+            'coupon_product_id' => $coupon->product_id,
+            'subtotal' => $subtotal,
+            'productSubtotal' => $productSubtotal,
+            'target_type' => is_array($target) ? 'array' : 'order',
+        ]);
+
         $discount = match ($coupon->type) {
             'fixed_money' => (float) $coupon->value,
             'fixed_points' => app(PointsService::class)->convertPointsToEuros((int) $coupon->value),
@@ -82,7 +92,16 @@ class CouponService
             default => 0,
         };
 
-        return round(min(max($discount, 0), $subtotal), 2);
+        $finalDiscount = round(min(max($discount, 0), $subtotal), 2);
+
+        // Debug: Log the calculation result
+        \Log::info('CouponService calculateDiscount result:', [
+            'discount_before_rounding' => $discount,
+            'final_discount' => $finalDiscount,
+            'subtotal' => $subtotal,
+        ]);
+
+        return $finalDiscount;
     }
 
     public function applyCoupon(Coupon $coupon, Order $order): float
@@ -128,7 +147,7 @@ class CouponService
     protected function uniqueCode(string $prefix): string
     {
         do {
-            $code = $prefix . '-' . strtoupper(Str::random(8));
+            $code = $prefix.'-'.strtoupper(Str::random(8));
         } while (Coupon::where('code', $code)->exists());
 
         return $code;

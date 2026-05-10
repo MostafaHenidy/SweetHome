@@ -13,10 +13,15 @@ class ShopPage extends Component
     use WithPagination;
 
     public $search = '';
+
     public $category = '';
+
     public $brand = '';
+
     public $sort = 'newest';
+
     public $minPrice = '';
+
     public $maxPrice = '';
 
     protected $queryString = [
@@ -28,14 +33,27 @@ class ShopPage extends Component
         'maxPrice' => ['except' => ''],
     ];
 
-    public function updatingSearch() { $this->resetPage(); }
-    public function updatingCategory() { $this->resetPage(); }
-    public function updatingBrand() { $this->resetPage(); }
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingCategory()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingBrand()
+    {
+        $this->resetPage();
+    }
 
     public function clearFilters()
     {
         $this->reset(['search', 'category', 'brand', 'sort', 'minPrice', 'maxPrice']);
     }
+
+    protected $listeners = ['cart-updated' => '$refresh'];
 
     public function render()
     {
@@ -43,19 +61,18 @@ class ShopPage extends Component
 
         if ($this->search) {
             $query->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('sku', 'like', '%' . $this->search . '%')
-                  ->orWhere('short_description', 'like', '%' . $this->search . '%');
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('sku', 'like', '%'.$this->search.'%')
+                    ->orWhere('short_description', 'like', '%'.$this->search.'%');
             });
         }
 
         if ($this->category) {
             $category = Category::where('slug', $this->category)->first();
             if ($category) {
-                $categoryIds = [$category->id];
-                $categoryIds = array_merge($categoryIds, $category->children->pluck('id')->toArray());
+                $categoryIds = $this->categoryAndDescendantIds($category);
                 $query->whereHas('categories', function ($q) use ($categoryIds) {
-                    $q->whereIn('category_id', $categoryIds);
+                    $q->whereIn('categories.id', $categoryIds);
                 });
             }
         }
@@ -64,8 +81,12 @@ class ShopPage extends Component
             $query->where('brand_id', $this->brand);
         }
 
-        if ($this->minPrice) { $query->where('price', '>=', $this->minPrice); }
-        if ($this->maxPrice) { $query->where('price', '<=', $this->maxPrice); }
+        if ($this->minPrice) {
+            $query->where('price', '>=', $this->minPrice);
+        }
+        if ($this->maxPrice) {
+            $query->where('price', '<=', $this->maxPrice);
+        }
 
         match ($this->sort) {
             'price_asc' => $query->orderBy('price', 'asc'),
@@ -75,7 +96,7 @@ class ShopPage extends Component
             default => $query->orderByDiscounts()->latest(),
         };
 
-        $products = $query->paginate(12);
+        $products = $query->paginate(27);
         $categories = Category::whereNull('parent_id')->where('active', true)->orderBy('sort_order')->get();
         $brands = Brand::where('active', true)->orderBy('sort_order')->get();
         $currentCategory = $this->category ? Category::where('slug', $this->category)->first() : null;
@@ -86,5 +107,18 @@ class ShopPage extends Component
             'brands' => $brands,
             'currentCategory' => $currentCategory,
         ]);
+    }
+
+    protected function categoryAndDescendantIds(Category $category): array
+    {
+        $ids = [$category->id];
+
+        $category->loadMissing('children.children');
+
+        foreach ($category->children as $child) {
+            $ids = array_merge($ids, $this->categoryAndDescendantIds($child));
+        }
+
+        return array_values(array_unique($ids));
     }
 }

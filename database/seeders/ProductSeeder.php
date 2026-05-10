@@ -14,7 +14,6 @@ class ProductSeeder extends Seeder
     public function run(): void
     {
         $brands = Brand::all();
-        $categories = Category::all();
 
         $sampleProducts = [
             [
@@ -65,19 +64,22 @@ class ProductSeeder extends Seeder
             $brand = $brands->firstWhere('slug', $data['brand_slug']);
             $categoryIds = Category::whereIn('slug', $data['category_slugs'])->pluck('id');
 
-            $product = Product::create([
-                'sku' => $data['sku'],
-                'name' => $data['name'],
-                'slug' => Str::slug($data['name']),
-                'price' => $data['price'],
-                'brand_id' => $brand?->id,
-                'short_description' => $data['short_description'],
-                'description' => '<p>' . $data['short_description'] . '</p><p>Prodotto di alta qualità, made in Italy.</p>',
-                'status' => 'published',
-                'stock_quantity' => rand(10, 100),
-            ]);
+            $product = Product::updateOrCreate(
+                ['sku' => $data['sku']],
+                [
+                    'name' => $data['name'],
+                    'slug' => Str::slug($data['name']),
+                    'price' => $data['price'],
+                    'brand_id' => $brand?->id,
+                    'short_description' => $data['short_description'],
+                    'description' => '<p>'.$data['short_description'].'</p><p>Prodotto di alta qualita, made in Italy.</p>',
+                    'status' => 'published',
+                    'stock_quantity' => rand(10, 100),
+                ]
+            );
 
-            $product->categories()->attach($categoryIds);
+            $product->categories()->syncWithoutDetaching($categoryIds);
+            $product->attributes()->delete();
 
             foreach ($data['attributes'] as $attr) {
                 ProductAttribute::create([

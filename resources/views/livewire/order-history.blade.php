@@ -7,6 +7,9 @@
                         <div>
                             <h3 class="text-lg font-serif text-brand-light">
                                 Ordine #{{ $order->order_number }}
+                                <span class="text-sm text-gray-400 font-normal ml-2">
+                                    (Acquisto diretto)
+                                </span>
                             </h3>
                             <p class="text-sm text-gray-400 mt-1">
                                 {{ $order->created_at->format('d/m/Y H:i') }}
@@ -38,7 +41,7 @@
                         </div>
                     </div>
 
-                    <div class="mt-4 pt-4 border-t border-white/5">
+                    <div class="mt-4 pt-4 border-t border-white/5 space-y-3">
                         <p class="text-sm text-gray-400">
                             {{ $order->items->count() }} articoli —
                             @foreach($order->items->take(3) as $item)
@@ -46,6 +49,20 @@
                             @endforeach
                             @if($order->items->count() > 3) e altri {{ $order->items->count() - 3 }} @endif
                         </p>
+                        <div class="flex flex-wrap gap-3">
+                            @if($order->order_confirmation_pdf_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($order->order_confirmation_pdf_path))
+                                <a href="{{ route('account.orders.document', ['order' => $order, 'document' => 'confirmation']) }}"
+                                   class="text-xs font-semibold tracking-wider uppercase text-brand-gold border border-brand-gold/40 px-3 py-1.5 rounded-sm hover:bg-brand-gold/10 transition">
+                                    Scarica modulo ordine
+                                </a>
+                            @endif
+                            @if($order->payment_status === 'paid' && $order->invoice_pdf_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($order->invoice_pdf_path))
+                                <a href="{{ route('account.orders.document', ['order' => $order, 'document' => 'invoice']) }}"
+                                   class="text-xs font-semibold tracking-wider uppercase text-gray-300 border border-white/15 px-3 py-1.5 rounded-sm hover:bg-white/5 transition">
+                                    Scarica fattura
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 </div>
             @endforeach

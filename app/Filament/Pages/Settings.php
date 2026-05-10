@@ -3,24 +3,27 @@
 namespace App\Filament\Pages;
 
 use App\Models\Setting;
+use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Section;
-use Filament\Pages\Page;
-use Filament\Forms\Form;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Actions\Action;
+use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Pages\Concerns\InteractsWithFormActions;
+use Filament\Pages\Page;
 
 class Settings extends Page implements HasForms
 {
-    use InteractsWithForms;
     use InteractsWithFormActions;
+    use InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+
     protected static string $view = 'filament.pages.settings';
+
     protected static ?int $navigationSort = 100;
 
     public ?array $data = [];
@@ -36,6 +39,12 @@ class Settings extends Page implements HasForms
             'site_favicon' => Setting::get('site_favicon', null),
             'vat_number' => Setting::get('vat_number', ''),
             'tax_code' => Setting::get('tax_code', ''),
+            'company_legal_name' => Setting::get('company_legal_name', ''),
+            'company_iban' => Setting::get('company_iban', ''),
+            'company_rea' => Setting::get('company_rea', ''),
+            'company_pec' => Setting::get('company_pec', ''),
+            'company_sdi' => Setting::get('company_sdi', ''),
+            'default_vat_rate' => Setting::get('default_vat_rate', 22),
             'shipping_cost' => Setting::get('shipping_cost', 0),
             'free_shipping_threshold' => Setting::get('free_shipping_threshold', 0),
         ]);
@@ -68,6 +77,19 @@ class Settings extends Page implements HasForms
                         TextInput::make('vat_number')->label('Partita IVA'),
                         TextInput::make('tax_code')->label('Codice Fiscale'),
                     ])->columns(2),
+                Section::make('Documenti e dati aziendali')
+                    ->schema([
+                        TextInput::make('company_legal_name')->label('Ragione sociale (documenti)')->maxLength(255),
+                        TextInput::make('company_iban')->label('IBAN')->maxLength(64),
+                        TextInput::make('company_rea')->label('REA')->maxLength(64),
+                        TextInput::make('company_pec')->label('PEC')->maxLength(255),
+                        TextInput::make('company_sdi')->label('Codice SDI')->maxLength(32),
+                        TextInput::make('default_vat_rate')
+                            ->label('Aliquota IVA predefinita prodotti (%)')
+                            ->numeric()
+                            ->step(0.01)
+                            ->suffix('%'),
+                    ])->columns(2),
                 Section::make('Spedizione')
                     ->schema([
                         TextInput::make('shipping_cost')->label('Costo Spedizione (€)')->numeric(),
@@ -83,7 +105,7 @@ class Settings extends Page implements HasForms
         foreach ($data as $key => $value) {
             Setting::set($key, $value);
         }
-        \Filament\Notifications\Notification::make()
+        Notification::make()
             ->title('Impostazioni salvate con successo.')
             ->success()
             ->send();

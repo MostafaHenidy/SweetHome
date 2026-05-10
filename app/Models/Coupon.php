@@ -49,6 +49,11 @@ class Coupon extends Model
         return $this->hasMany(CouponUsage::class);
     }
 
+    public function qrTokens(): HasMany
+    {
+        return $this->hasMany(CouponQRToken::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query

@@ -23,11 +23,13 @@ class BrandSeeder extends Seeder
         ];
 
         foreach ($brands as $name) {
-            Brand::create([
-                'name' => $name,
-                'slug' => Str::slug($name),
-                'active' => true,
-            ]);
+            Brand::updateOrCreate(
+                ['slug' => Str::slug($name)],
+                [
+                    'name' => $name,
+                    'active' => true,
+                ]
+            );
         }
     }
 }

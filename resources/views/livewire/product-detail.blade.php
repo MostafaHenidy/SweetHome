@@ -19,8 +19,8 @@
             <!-- Image Gallery -->
             <div>
                 <div class="aspect-square overflow-hidden rounded-sm bg-brand-slate/10 mb-4">
-                    @if($product->hasMedia('images'))
-                        <img src="{{ $product->getMedia('images')[$activeImageIndex]->getUrl('medium') }}"
+                    @if($product->hasMedia('images') || $product->featured_image)
+                        <img src="{{ $product->hasMedia('images') ? $product->getMedia('images')[$activeImageIndex]->getUrl('medium') : $product->featured_image }}"
                              alt="{{ $product->name }}"
                              class="w-full h-full object-cover">
                     @else
@@ -97,8 +97,12 @@
                                 class="px-4 py-3 text-brand-light hover:text-brand-gold transition">+</button>
                     </div>
                     <button wire:click="addToCart"
-                            class="flex-1 px-8 py-3 bg-brand-gold text-brand-dark text-sm font-semibold tracking-widest uppercase hover:bg-opacity-90 transition rounded-sm">
-                        Aggiungi al Carrello
+                            x-data="{ adding: false }"
+                            x-on:click="adding = true; setTimeout(() => adding = false, 600)"
+                            :class="adding ? 'adding' : ''"
+                            class="add-to-cart-btn flex-1 px-8 py-3 bg-brand-gold text-brand-dark text-sm font-semibold tracking-widest uppercase hover:bg-opacity-90 transition rounded-sm">
+                        <span x-show="!adding">Aggiungi al Carrello</span>
+                        <span x-show="adding" x-cloak>Aggiunto!</span>
                     </button>
                 </div>
 
@@ -159,6 +163,12 @@
                 </div>
 
                 <div x-show="tab === 'reviews'" x-cloak>
+                    @if(session('review_submitted'))
+                        <div class="mb-6 border border-brand-gold/30 bg-brand-gold/10 px-4 py-3 text-sm text-brand-light rounded-sm">
+                            {{ session('review_submitted') }}
+                        </div>
+                    @endif
+
                     @if($product->reviews->count() > 0)
                         <div class="space-y-6">
                             @foreach($product->reviews as $review)
@@ -182,6 +192,50 @@
                         </div>
                     @else
                         <p class="text-gray-400">Nessuna recensione ancora. Sii il primo!</p>
+                    @endif
+
+                    @if($product->enable_reviews)
+                        <div class="mt-10 border-t border-white/10 pt-8">
+                            <h3 class="text-xl font-serif text-brand-light mb-4">Lascia una recensione</h3>
+
+                            @guest
+                                <p class="text-sm text-gray-400">
+                                    Devi <a href="{{ route('auth') }}" class="text-brand-gold hover:text-brand-light transition">accedere</a> e aver acquistato questo prodotto per lasciare una recensione.
+                                </p>
+                            @elseif($alreadyReviewedProduct)
+                                <p class="text-sm text-gray-400">Hai gia inviato una recensione per questo prodotto.</p>
+                            @elseif(! $canReviewProduct)
+                                <p class="text-sm text-gray-400">Puoi recensire solo prodotti acquistati con un ordine pagato.</p>
+                            @else
+                                <form wire:submit.prevent="submitReview" class="max-w-2xl space-y-5">
+                                    <div>
+                                        <label class="block text-xs font-semibold tracking-widest uppercase text-gray-400 mb-2">Valutazione</label>
+                                        <select wire:model="reviewRating"
+                                                class="w-full sm:w-48 px-3 py-2 bg-brand-slate/20 border border-white/10 text-brand-light text-sm rounded-sm focus:outline-none focus:border-brand-gold transition-colors">
+                                            @for($i = 5; $i >= 1; $i--)
+                                                <option value="{{ $i }}">{{ $i }} stelle</option>
+                                            @endfor
+                                        </select>
+                                        @error('reviewRating')<p class="text-red-400 text-xs mt-2">{{ $message }}</p>@enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-semibold tracking-widest uppercase text-gray-400 mb-2">Commento</label>
+                                        <textarea wire:model.defer="reviewComment"
+                                                  rows="4"
+                                                  class="w-full px-4 py-3 bg-brand-slate/20 border border-white/10 text-brand-light placeholder-gray-500 text-sm rounded-sm focus:outline-none focus:border-brand-gold transition-colors resize-none"
+                                                  placeholder="Racconta la tua esperienza con questo prodotto"></textarea>
+                                        @error('reviewComment')<p class="text-red-400 text-xs mt-2">{{ $message }}</p>@enderror
+                                        @error('review')<p class="text-red-400 text-xs mt-2">{{ $message }}</p>@enderror
+                                    </div>
+
+                                    <button type="submit"
+                                            class="inline-flex items-center justify-center px-6 py-3 bg-brand-gold text-brand-dark text-xs font-semibold tracking-widest uppercase hover:bg-opacity-90 transition rounded-sm">
+                                        Invia Recensione
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
                     @endif
                 </div>
             </div>

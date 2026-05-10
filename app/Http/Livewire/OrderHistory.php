@@ -14,6 +14,7 @@ class OrderHistory extends Component
     {
         $orders = Order::query()
             ->where('customer_email', auth()->user()->email)
+            ->where('type', 'direct') // Only show direct orders, not quote requests
             ->latest()
             ->paginate(10);
 

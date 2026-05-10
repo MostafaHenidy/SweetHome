@@ -13,11 +13,18 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'order_number', 'user_id', 'customer_name', 'customer_email',
-        'customer_phone', 'shipping_address', 'billing_address',
+        'order_number', 'type', 'user_id', 'customer_id', 'customer_name', 'customer_email',
+        'customer_phone', 'customer_company_name', 'customer_vat_number', 'customer_tax_code',
+        'shipping_address', 'billing_address',
         'subtotal', 'shipping_cost', 'tax', 'coupon_id', 'coupon_code',
         'discount_amount', 'total',
-        'status', 'payment_method', 'payment_status', 'notes',
+        'status', 'payment_method', 'payment_status', 'payment_transaction_id',
+        'notes', 'quote_expires_at', 'quote_pdf_path',
+        'quote_document_number', 'quote_document_year',
+        'order_confirmation_pdf_path', 'invoice_pdf_path',
+        'invoice_document_number', 'invoice_document_year',
+        // New fields for enhanced order system
+        'shipping_method', 'service_type', 'payment_plan_type', 'deposit_amount',
     ];
 
     protected $casts = [
@@ -28,7 +35,31 @@ class Order extends Model
         'tax' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
+        'deposit_amount' => 'decimal:2',
+        'quote_expires_at' => 'datetime',
+        'quote_document_number' => 'integer',
+        'quote_document_year' => 'integer',
+        'invoice_document_number' => 'integer',
+        'invoice_document_year' => 'integer',
     ];
+
+    public function formattedQuoteDocumentReference(): ?string
+    {
+        if ($this->quote_document_number === null || $this->quote_document_year === null) {
+            return null;
+        }
+
+        return $this->quote_document_number.' / '.$this->quote_document_year;
+    }
+
+    public function formattedInvoiceDocumentReference(): ?string
+    {
+        if ($this->invoice_document_number === null || $this->invoice_document_year === null) {
+            return null;
+        }
+
+        return $this->invoice_document_number.' / '.$this->invoice_document_year;
+    }
 
     public function user(): BelongsTo
     {
@@ -55,8 +86,96 @@ class Order extends Model
         return $this->belongsTo(Coupon::class);
     }
 
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function paymentInstallments(): HasMany
+    {
+        return $this->hasMany(PaymentInstallment::class)->orderBy('installment_number');
+    }
+
     public function getFormattedTotalAttribute(): string
     {
-        return '€' . number_format($this->total, 2, ',', '.');
+        return '€'.number_format($this->total, 2, ',', '.');
+    }
+
+    public function isQuoteRequest(): bool
+    {
+        return $this->type === 'quote_request';
+    }
+
+    public function isDirectPurchase(): bool
+    {
+        return $this->type === 'direct';
+    }
+
+    public function isQuoteExpired(): bool
+    {
+        return $this->quote_expires_at && $this->quote_expires_at->isPast();
+    }
+
+    public function canBeAccepted(): bool
+    {
+        return $this->status === 'quote_sent' && ! $this->isQuoteExpired();
+    }
+
+    // Enhanced order system helper methods
+    public function isDelivery(): bool
+    {
+        return $this->shipping_method === 'delivery';
+    }
+
+    public function isPickup(): bool
+    {
+        return $this->shipping_method === 'pickup';
+    }
+
+    public function hasConstruction(): bool
+    {
+        return $this->service_type === 'shipping_and_construction';
+    }
+
+    public function getPendingInstallments()
+    {
+        return $this->paymentInstallments->where('status', 'pending');
+    }
+
+    public function getPaidInstallments()
+    {
+        return $this->paymentInstallments->where('status', 'paid');
+    }
+
+    public function getNextPendingInstallment()
+    {
+        return $this->paymentInstallments->where('status', 'pending')->first();
+    }
+
+    public function getPaymentPlanTypeLabel(): string
+    {
+        return match ($this->payment_plan_type) {
+            '50-50' => '50-50 Payment Plan',
+            '50-30-20' => '50-30-20 Payment Plan',
+            default => 'Payment Plan',
+        };
+    }
+
+    public function getShippingMethodLabel(): string
+    {
+        return match ($this->shipping_method) {
+            'delivery' => 'Delivery',
+            'pickup' => 'Pickup',
+            default => ucfirst($this->shipping_method),
+        };
+    }
+
+    public function getServiceTypeLabel(): string
+    {
+        return match ($this->service_type) {
+            'shipping_only' => 'Shipping Only',
+            'shipping_and_construction' => 'Shipping & Construction',
+            default => ucfirst($this->service_type),
+        };
     }
 }

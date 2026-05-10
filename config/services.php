@@ -41,4 +41,10 @@ return [
         ],
     ],
 
+    'fawaterak' => [
+        'api_key' => env('FAWATERAK_API_KEY'),
+        'secret_key' => env('FAWATERAK_SECRET_KEY'),
+        'base_url' => env('FAWATERAK_BASE_URL', 'https://api.fawaterak.com'),
+    ],
+
 ];

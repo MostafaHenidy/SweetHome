@@ -40,7 +40,11 @@
       "Bash(findstr \"version\")",
       "Bash(findstr \"versions\")",
       "Bash(findstr /s /i \"class Column\" vendor\\\\filament\\\\*\\\\src\\\\*.php)",
-      "Bash(xargs -I{} basename {})"
+      "Bash(xargs -I{} basename {})",
+      "Bash(findstr zip:*)",
+      "Bash(findstr com:*)",
+      "Bash(winget install:*)",
+      "Bash(composer search:*)"
     ]
   }
 }

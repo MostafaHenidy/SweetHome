@@ -8,11 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\ProductFilter;
-use App\Models\ProductImage;
-use App\Models\ProductLabel;
-use App\Models\ProductVariant;
-use App\Models\ProductVariantOption;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -24,16 +19,17 @@ class Product extends Model implements HasMedia
         'sku', 'name', 'slug', 'short_description', 'description',
         'price', 'compare_price', 'cost_price', 'brand_id',
         'stock_quantity', 'track_stock', 'status', 'sort_order',
-        'gender', 'product_type', 'meta_title', 'meta_description',
+        'gender', 'product_type', 'quote_line_text', 'meta_title', 'meta_description',
         'focus_keyword', 'weight', 'length', 'width', 'height',
         'shipping_class', 'free_shipping', 'enable_reviews',
-        'is_taxable', 'is_featured', 'published_at',
+        'is_taxable', 'vat_rate', 'unit_of_measure', 'is_featured', 'published_at',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'compare_price' => 'decimal:2',
         'cost_price' => 'decimal:2',
+        'vat_rate' => 'decimal:2',
         'track_stock' => 'boolean',
         'free_shipping' => 'boolean',
         'enable_reviews' => 'boolean',
@@ -115,6 +111,7 @@ class Product extends Model implements HasMedia
         } else {
             $first = $this->images()->orderBy('sort_order')->first();
         }
+
         return $first?->url;
     }
 
@@ -155,7 +152,25 @@ class Product extends Model implements HasMedia
 
     public function getFormattedPriceAttribute(): string
     {
-        return '€' . number_format($this->price, 2, ',', '.');
+        return '€'.number_format($this->price, 2, ',', '.');
+    }
+
+    /**
+     * Line text for quotes/invoices (Descrizione): explicit PDF text, else short description, else name.
+     */
+    public function quoteLineDescription(): string
+    {
+        $explicit = trim((string) $this->quote_line_text);
+        if ($explicit !== '') {
+            return $explicit;
+        }
+
+        $short = trim((string) $this->short_description);
+        if ($short !== '') {
+            return $short;
+        }
+
+        return (string) $this->name;
     }
 
     public function registerMediaCollections(): void

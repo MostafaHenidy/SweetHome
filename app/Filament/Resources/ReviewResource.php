@@ -9,7 +9,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class ReviewResource extends Resource
 {
@@ -46,6 +45,10 @@ class ReviewResource extends Resource
                     ])
                     ->default('pending')
                     ->required(),
+                Forms\Components\Toggle::make('show_on_home')
+                    ->label('Mostra in home')
+                    ->helperText('Condivide questa recensione nel carosello della homepage.')
+                    ->default(false),
             ]);
     }
 
@@ -67,6 +70,10 @@ class ReviewResource extends Resource
                         'success' => 'approved',
                         'danger' => 'rejected',
                     ]),
+                Tables\Columns\IconColumn::make('show_on_home')
+                    ->label('Home')
+                    ->boolean()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
@@ -82,6 +89,8 @@ class ReviewResource extends Resource
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload(),
+                Tables\Filters\TernaryFilter::make('show_on_home')
+                    ->label('Mostra in home'),
             ])
             ->actions([
                 Tables\Actions\Action::make('approve')
@@ -98,6 +107,21 @@ class ReviewResource extends Resource
                     ->requiresConfirmation()
                     ->action(fn (Review $record) => $record->update(['status' => 'rejected']))
                     ->visible(fn (Review $record) => $record->status !== 'rejected'),
+                Tables\Actions\Action::make('share_on_home')
+                    ->label('Mostra in home')
+                    ->icon('heroicon-o-sparkles')
+                    ->color('warning')
+                    ->action(fn (Review $record) => $record->update([
+                        'status' => 'approved',
+                        'show_on_home' => true,
+                    ]))
+                    ->visible(fn (Review $record) => ! $record->show_on_home),
+                Tables\Actions\Action::make('hide_from_home')
+                    ->label('Nascondi dalla home')
+                    ->icon('heroicon-o-eye-slash')
+                    ->color('gray')
+                    ->action(fn (Review $record) => $record->update(['show_on_home' => false]))
+                    ->visible(fn (Review $record) => $record->show_on_home),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

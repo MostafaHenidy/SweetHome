@@ -7,16 +7,14 @@ use App\Models\Product;
 use Filament\Forms\Components;
 // Column removed - not available in Filament Forms
 use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Layout;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Components\ViewField;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
-use Filament\Forms\Components\ViewField;
 use Illuminate\Support\Str;
 
 class ProductResource extends Resource
@@ -63,7 +61,9 @@ class ProductResource extends Resource
                     ->label('Nome Prodotto')
                     ->required()
                     ->live(onBlur: true)
-                    ->afterStateUpdated(function (Set $set, ?string $state) { return $set('slug', Str::slug($state)); })
+                    ->afterStateUpdated(function (Set $set, ?string $state) {
+                        return $set('slug', Str::slug($state));
+                    })
                     ->maxLength(255),
                 Components\Hidden::make('slug'),
                 Components\Select::make('categories')
@@ -76,6 +76,22 @@ class ProductResource extends Resource
                     ->label('Descrizione Breve')
                     ->rows(2)
                     ->maxLength(500),
+                Components\Textarea::make('quote_line_text')
+                    ->label('Testo riga preventivo / fattura')
+                    ->helperText('Usato nelle righe PDF; se vuoto si usa la descrizione breve o il nome.')
+                    ->rows(2)
+                    ->columnSpanFull(),
+                Grid::make(3)->schema([
+                    Components\TextInput::make('vat_rate')
+                        ->label('IVA predefinita (%)')
+                        ->numeric()
+                        ->step(0.01)
+                        ->suffix('%'),
+                    Components\TextInput::make('unit_of_measure')
+                        ->label('Unità di misura')
+                        ->maxLength(20)
+                        ->placeholder('pz, m², …'),
+                ]),
                 Components\RichEditor::make('description')
                     ->label('Descrizione Completa'),
             ]),
@@ -135,7 +151,9 @@ class ProductResource extends Resource
                         ViewField::make('variants_preview')
                             ->view('filament.forms.components.variants-preview'),
                     ]),
-                ])->visible(function (Get $get) { return $get('has_variants'); }),
+                ])->visible(function (Get $get) {
+                    return $get('has_variants');
+                }),
 
                 Components\Repeater::make('variants')
                     ->label('Varianti Manuali')

@@ -9,12 +9,14 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@sweethome.local',
-            'password' => bcrypt('admin123'),
-            'phone' => '+1234567890',
-            'email_verified_at' => now(),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin@sweethome.local'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('admin123'),
+                'phone' => '+1234567890',
+                'email_verified_at' => now(),
+            ]
+        );
     }
 }

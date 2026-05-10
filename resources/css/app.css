@@ -5,3 +5,205 @@
 [x-cloak] {
     display: none;
 }
+
+/* Add to Cart Button Animation */
+.add-to-cart-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.add-to-cart-btn:active {
+    transform: scale(0.95);
+}
+
+.add-to-cart-btn.adding {
+    background-color: #22c55e !important;
+}
+
+.add-to-cart-btn.adding::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(4);
+        opacity: 0;
+    }
+}
+
+/* Cart Count Bounce Animation */
+.cart-count {
+    transition: transform 0.3s ease;
+}
+
+.cart-count.bounce {
+    animation: cartBounce 0.5s ease;
+}
+
+@keyframes cartBounce {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.3); }
+    50% { transform: scale(0.9); }
+    75% { transform: scale(1.1); }
+}
+
+/* Product Card Add Animation */
+.product-card.adding {
+    transform: scale(0.98);
+    transition: transform 0.15s ease;
+}
+
+/* Toast notification styles */
+.toast-notification {
+    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.8);
+}
+
+/* Hero Carousel Styles */
+.hero-carousel {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-carousel .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.7s ease-in-out;
+}
+
+.hero-carousel .slide.active {
+    opacity: 1;
+    z-index: 1;
+}
+
+/* Ken Burns effect for background images */
+@keyframes kenBurns {
+    0% {
+        transform: scale(1) translateX(0);
+    }
+    50% {
+        transform: scale(1.08) translateX(-2%);
+    }
+    100% {
+        transform: scale(1.1) translateX(-3%);
+    }
+}
+
+.hero-carousel .ken-burns {
+    animation: kenBurns 20s ease-out infinite;
+}
+
+/* Enhanced fade transitions */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.7s ease-in-out;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+/* Mobile responsive improvements */
+@media (max-width: 768px) {
+    .hero-carousel .slide h1 {
+        font-size: 2.5rem !important;
+    }
+
+    .hero-carousel .slide p.text-lg {
+        font-size: 1rem !important;
+    }
+
+    .hero-nav-dot {
+        height: 3px !important;
+    }
+
+    .slide-counter {
+        font-size: 0.75rem !important;
+    }
+}
+
+/* Focus states for accessibility */
+.hero-nav-dot:focus,
+.hero-button:focus {
+    outline: 2px solid #d4a574;
+    outline-offset: 2px;
+}
+
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    .hero-carousel .ken-burns {
+        animation: none;
+    }
+
+    .hero-carousel .slide {
+        transition: opacity 0.3s ease-in-out;
+    }
+}
+
+/* Text stagger animations */
+@keyframes textFadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero-text-animate {
+    animation: textFadeInUp 0.6s ease-out forwards;
+}
+
+/* Navigation dot styling enhancement */
+.hero-nav-dot {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-nav-dot:hover {
+    transform: scale(1.3);
+}
+
+/* Button hover enhancement */
+.hero-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.hero-button:hover::before {
+    left: 100%;
+}
+
+/* Slide counter styling */
+.slide-counter {
+    font-family: 'Arial', sans-serif;
+    letter-spacing: 0.1em;
+}
