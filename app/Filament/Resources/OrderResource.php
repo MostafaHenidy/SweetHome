@@ -20,7 +20,27 @@ class OrderResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Forms\Components\Section::make('Order Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('order_number')
+                            ->disabled(),
+                        Forms\Components\TextInput::make('customer_name'),
+                        Forms\Components\TextInput::make('customer_email'),
+                        Forms\Components\TextInput::make('customer_phone'),
+                    ])->columns(3),
+                Forms\Components\Section::make('Quote Details')
+                    ->schema([
+                        Forms\Components\TextInput::make('buy_buy_dept')
+                            ->label('Buy Buy Department')
+                            ->helperText('Department information for quote-based orders')
+                            ->columnSpanFull(),
+                        Forms\Components\TextInput::make('quote_document_number')
+                            ->label('Quote Document Number')
+                            ->disabled(),
+                        Forms\Components\TextInput::make('quote_expires_at')
+                            ->label('Quote Expires')
+                            ->disabled(),
+                    ])->columns(2),
             ]);
     }
 
@@ -53,6 +73,16 @@ class OrderResource extends Resource
                         'danger' => 'failed',
                         'info' => 'refunded',
                     ])
+                    ->searchable(),
+                Tables\Columns\BadgeColumn::make('is_vip_order')
+                    ->label('VIP')
+                    ->boolean()
+                    ->colors([
+                        'success' => true,
+                        'gray' => false,
+                    ]),
+                Tables\Columns\TextColumn::make('buy_buy_dept')
+                    ->label('Dept')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i')

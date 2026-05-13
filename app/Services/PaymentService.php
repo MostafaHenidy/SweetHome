@@ -152,6 +152,9 @@ class PaymentService
             'status' => $newStatus,
         ]);
 
+        // Process VIP order points
+        $this->processVipOrderPoints($order);
+
         // Dispatch event for status change
         if ($oldStatus !== $newStatus) {
             OrderStatusChanged::dispatch($order, $oldStatus, $newStatus);
@@ -224,5 +227,31 @@ class PaymentService
         $order->update([
             'payment_status' => 'failed',
         ]);
+    }
+
+    /**
+     * Process VIP order points and check for automatic VIP qualification
+     */
+    private function processVipOrderPoints(Order $order): void
+    {
+        // Process points earning for the order
+        if ($order->user) {
+            $vipService = app(VipService::class);
+
+            // Mark order as VIP order if user is VIP
+            if ($order->user->isVip()) {
+                $order->update(['is_vip_order' => true]);
+            }
+
+            // Process earned points
+            $vipService->processOrderPoints($order);
+
+            // Check if user now qualifies for automatic VIP status
+            if (!$order->user->isVip()) {
+                if ($vipService->checkAutomaticQualification($order->user)) {
+                    $vipService->assignVip($order->user, 'automatic', null, "Auto-qualified after order {$order->order_number}");
+                }
+            }
+        }
     }
 }

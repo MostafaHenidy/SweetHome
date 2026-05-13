@@ -13,7 +13,7 @@ class ProductRecommendationServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_prefers_explicit_related_products_then_shared_categories(): void
+    public function test_it_prefers_shared_categories_then_explicit_related_then_featured(): void
     {
         $category = Category::create([
             'name' => 'Implants',
@@ -34,7 +34,7 @@ class ProductRecommendationServiceTest extends TestCase
         $recommendations = app(ProductRecommendationService::class)->forProduct($current, 3);
 
         $this->assertSame(
-            [$explicit->id, $shared->id, $unrelated->id],
+            [$shared->id, $explicit->id, $unrelated->id],
             $recommendations->pluck('id')->all()
         );
     }
@@ -55,5 +55,18 @@ class ProductRecommendationServiceTest extends TestCase
             'is_featured' => false,
             'published_at' => now(),
         ], $overrides));
+    }
+
+    public function test_it_falls_back_to_recent_published_when_no_category_explicit_or_featured(): void
+    {
+        $current = $this->product('Lonely Product');
+        $otherA = $this->product('Other A');
+        $otherB = $this->product('Other B');
+
+        $recommendations = app(ProductRecommendationService::class)->forProduct($current, 4);
+
+        $this->assertCount(2, $recommendations);
+        $this->assertTrue($recommendations->pluck('id')->contains($otherA->id));
+        $this->assertTrue($recommendations->pluck('id')->contains($otherB->id));
     }
 }

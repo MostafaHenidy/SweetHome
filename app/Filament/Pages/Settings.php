@@ -47,6 +47,10 @@ class Settings extends Page implements HasForms
             'default_vat_rate' => Setting::get('default_vat_rate', 22),
             'shipping_cost' => Setting::get('shipping_cost', 0),
             'free_shipping_threshold' => Setting::get('free_shipping_threshold', 0),
+            'vip_minimum_order_threshold' => Setting::get('vip_minimum_order_threshold', 1000),
+            'vip_time_period_days' => Setting::get('vip_time_period_days', 365),
+            'vip_auto_qualify_enabled' => Setting::get('vip_auto_qualify_enabled', true),
+            'points_per_euro_rate' => Setting::get('points_per_euro_rate', 1.00),
         ]);
     }
 
@@ -94,6 +98,28 @@ class Settings extends Page implements HasForms
                     ->schema([
                         TextInput::make('shipping_cost')->label('Costo Spedizione (€)')->numeric(),
                         TextInput::make('free_shipping_threshold')->label('Soglia Spedizione Gratuita (€)')->numeric(),
+                    ])->columns(2),
+                Section::make('Sistema VIP e Punti')
+                    ->schema([
+                        TextInput::make('vip_minimum_order_threshold')
+                            ->label('Soglia Ordini Minima per VIP (€)')
+                            ->numeric()
+                            ->default(1000)
+                            ->helperText('Spesa minima nel periodo di tempo per qualificarsi come VIP'),
+                        TextInput::make('vip_time_period_days')
+                            ->label('Periodo di Tempo per VIP (giorni)')
+                            ->numeric()
+                            ->default(365)
+                            ->helperText('Periodo di osservazione della cronologia ordini'),
+                        Toggle::make('vip_auto_qualify_enabled')
+                            ->label('Abilita Qualificazione VIP Automatica')
+                            ->helperText('Assegna automaticamente lo status VIP quando i clienti raggiungono la soglia'),
+                        TextInput::make('points_per_euro_rate')
+                            ->label('Tasso Punti per Euro')
+                            ->numeric()
+                            ->step(0.01)
+                            ->default(1.00)
+                            ->helperText('Quanti punti equivalgono a 1 euro'),
                     ])->columns(2),
             ])
             ->statePath('data');

@@ -25,6 +25,8 @@ class Order extends Model
         'invoice_document_number', 'invoice_document_year',
         // New fields for enhanced order system
         'shipping_method', 'service_type', 'payment_plan_type', 'deposit_amount',
+        // VIP system fields
+        'is_vip_order', 'points_earned', 'points_redeemed', 'buy_buy_dept',
     ];
 
     protected $casts = [
@@ -41,6 +43,9 @@ class Order extends Model
         'quote_document_year' => 'integer',
         'invoice_document_number' => 'integer',
         'invoice_document_year' => 'integer',
+        'is_vip_order' => 'boolean',
+        'points_earned' => 'decimal:2',
+        'points_redeemed' => 'decimal:2',
     ];
 
     public function formattedQuoteDocumentReference(): ?string
@@ -177,5 +182,28 @@ class Order extends Model
             'shipping_and_construction' => 'Shipping & Construction',
             default => ucfirst($this->service_type),
         };
+    }
+
+    /**
+     * VIP Order Methods
+     */
+    public function isVipOrder(): bool
+    {
+        return (bool) $this->is_vip_order;
+    }
+
+    public function hasBuyBuyDept(): bool
+    {
+        return !empty($this->buy_buy_dept);
+    }
+
+    public function getBuyBuyDeptAttribute(): ?string
+    {
+        return $this->attributes['buy_buy_dept'] ?? null;
+    }
+
+    public function setBuyBuyDeptAttribute(?string $value): void
+    {
+        $this->attributes['buy_buy_dept'] = $value;
     }
 }

@@ -12,14 +12,19 @@ class ProductRecommendationService
     {
         $recommendations = collect();
 
-        $this->append($recommendations, $this->explicitRelatedProducts($product, $limit), $product, $limit);
+        // Prefer products that share categories with the current product
+        $this->append($recommendations, $this->categoryRelatedProducts($product, $limit), $product, $limit);
 
         if ($recommendations->count() < $limit) {
-            $this->append($recommendations, $this->categoryRelatedProducts($product, $limit), $product, $limit);
+            $this->append($recommendations, $this->explicitRelatedProducts($product, $limit), $product, $limit);
         }
 
         if ($recommendations->count() < $limit) {
             $this->append($recommendations, $this->featuredFallbackProducts($product, $limit), $product, $limit);
+        }
+
+        if ($recommendations->count() < $limit) {
+            $this->append($recommendations, $this->recentPublishedFallbackProducts($product, $limit), $product, $limit);
         }
 
         return new Collection($recommendations->take($limit)->values()->all());
@@ -64,6 +69,20 @@ class ProductRecommendationService
             ->where('is_featured', true)
             ->with(['brand', 'images'])
             ->latest()
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Last resort: other published products so the related strip is not empty.
+     */
+    protected function recentPublishedFallbackProducts(Product $product, int $limit): Collection
+    {
+        return Product::published()
+            ->whereKeyNot($product->id)
+            ->with(['brand', 'images'])
+            ->latest('published_at')
+            ->latest('id')
             ->limit($limit)
             ->get();
     }

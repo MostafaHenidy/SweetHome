@@ -12,14 +12,20 @@ class PointsTransaction extends Model
 
     protected $fillable = [
         'user_id',
-        'points',
-        'type',
         'order_id',
+        'points',
+        'balance_before',
+        'balance_after',
+        'type',
         'description',
+        'metadata',
     ];
 
     protected $casts = [
-        'points' => 'integer',
+        'points' => 'decimal:2',
+        'balance_before' => 'decimal:2',
+        'balance_after' => 'decimal:2',
+        'metadata' => 'array',
     ];
 
     public function user(): BelongsTo

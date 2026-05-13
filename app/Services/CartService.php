@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Helpers\ImageHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
@@ -93,7 +94,7 @@ class CartService
                     'product_id' => $productId,
                     'name' => $product->name,
                     'price' => $product->price,
-                    'image' => $product->getFirstMediaUrl('images', 'thumb') ?: $product->featured_image,
+                    'image' => ImageHelper::getProductMainImage($product),
                     'quantity' => $quantity,
                     'attributes' => $attributes,
                 ];
@@ -222,7 +223,7 @@ class CartService
             'name' => $product->name,
             'line_description' => $product->quoteLineDescription(),
             'price' => $unitPrice,
-            'image' => $product->getFirstMediaUrl('images', 'thumb') ?: $product->featured_image,
+            'image' => ImageHelper::getProductMainImage($product),
             'quantity' => $quantity,
             'attributes' => $attributes,
             'attribute_selection' => $attributes,
@@ -231,4 +232,5 @@ class CartService
             'vat_rate' => $product->vat_rate !== null ? (float) $product->vat_rate : $defaultVat,
         ];
     }
+
 }

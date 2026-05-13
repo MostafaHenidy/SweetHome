@@ -134,6 +134,7 @@ class BrandedPdfService
             'discount_amount' => $this->moneyPlain($order->discount_amount),
             'total' => $this->moneyPlain($order->total),
             'notes' => $order->notes,
+            'buy_buy_dept' => (string) ($order->buy_buy_dept ?? ''),
             'shipping_address' => $this->formatAddressBlock($order),
             'created_at' => $order->created_at?->format('d/m/Y H:i'),
             'quote_expires_at' => $order->quote_expires_at?->format('d/m/Y'),

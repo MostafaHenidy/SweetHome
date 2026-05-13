@@ -44,6 +44,10 @@ class User extends Authenticatable
         'postal_code',
         'country',
         'points_balance',
+        'is_vip',
+        'vip_type',
+        'vip_assigned_at',
+        'vip_assigned_by',
     ];
 
     /**
@@ -77,7 +81,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'points_balance' => 'integer',
+            'points_balance' => 'decimal:2',
+            'is_vip' => 'boolean',
+            'vip_assigned_at' => 'datetime',
         ];
     }
 
@@ -119,6 +125,16 @@ class User extends Authenticatable
     public function inquiries(): HasMany
     {
         return $this->hasMany(UserInquiry::class);
+    }
+
+    public function vipAssignments(): HasMany
+    {
+        return $this->hasMany(VipAssignment::class, 'user_id');
+    }
+
+    public function vipAssigner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'vip_assigned_by');
     }
 
     public function getPointsValueInEurosAttribute(): float
@@ -178,5 +194,59 @@ class User extends Authenticatable
         ];
 
         return implode(', ', array_filter($parts));
+    }
+
+    /**
+     * VIP Status Methods
+     */
+    public function isVip(): bool
+    {
+        return (bool) $this->is_vip;
+    }
+
+    public function scopeVip($query)
+    {
+        return $query->where('is_vip', true);
+    }
+
+    public function scopeNonVip($query)
+    {
+        return $query->where('is_vip', false);
+    }
+
+    public function becomeVip(string $type = 'manual', ?User $assignedBy = null): bool
+    {
+        $this->is_vip = true;
+        $this->vip_type = $type;
+        $this->vip_assigned_at = now();
+        $this->vip_assigned_by = $assignedBy?->id;
+
+        return $this->save();
+    }
+
+    public function loseVipStatus(): bool
+    {
+        $this->is_vip = false;
+        $this->vip_type = null;
+        $this->vip_assigned_at = null;
+        $this->vip_assigned_by = null;
+
+        return $this->save();
+    }
+
+    /**
+     * Calculate lifetime spend for VIP qualification
+     */
+    public function calculateLifetimeSpend(int $days = null): float
+    {
+        $query = $this->orders()
+            ->where('payment_status', 'paid')
+            ->where('status', '!=', 'cancelled');
+
+        if ($days) {
+            $query->where('created_at', '>=', now()->subDays($days));
+        }
+
+        return (float) $query->sum('total');
     }
 }

@@ -1,3 +1,33 @@
+@php
+    use App\Helpers\ImageHelper;
+
+    $productMedia = $product->getMedia('images');
+    $galleryItems = [];
+
+    foreach ($productMedia as $media) {
+        $galleryItems[] = [
+            'url' => $media->hasGeneratedConversion('medium') ? $media->getUrl('medium') : $media->getUrl(),
+            'thumb' => $media->hasGeneratedConversion('thumb') ? $media->getUrl('thumb') : $media->getUrl(),
+        ];
+    }
+
+    if (count($galleryItems) === 0 && $product->featured_image) {
+        $galleryItems[] = ['url' => $product->featured_image, 'thumb' => $product->featured_image];
+    }
+
+    if (count($galleryItems) === 0) {
+        foreach ($product->variants->where('is_active', true)->sortBy('sort_order') as $variant) {
+            $u = ImageHelper::getVariantMainImage($variant);
+            if ($u) {
+                $galleryItems[] = ['url' => $u, 'thumb' => $u];
+            }
+        }
+    }
+
+    $safeImageIndex = count($galleryItems) > 0
+        ? max(0, min($activeImageIndex, count($galleryItems) - 1))
+        : 0;
+@endphp
 <div>
     <!-- Breadcrumb -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -16,11 +46,11 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <!-- Image Gallery -->
+            <!-- Image Gallery (product media, featured_image, or variant Spatie "main") -->
             <div>
                 <div class="aspect-square overflow-hidden rounded-sm bg-brand-slate/10 mb-4">
-                    @if($product->hasMedia('images') || $product->featured_image)
-                        <img src="{{ $product->hasMedia('images') ? $product->getMedia('images')[$activeImageIndex]->getUrl('medium') : $product->featured_image }}"
+                    @if(count($galleryItems) > 0)
+                        <img src="{{ $galleryItems[$safeImageIndex]['url'] }}"
                              alt="{{ $product->name }}"
                              class="w-full h-full object-cover">
                     @else
@@ -31,12 +61,12 @@
                         </div>
                     @endif
                 </div>
-                @if($product->hasMedia('images') && $product->getMedia('images')->count() > 1)
+                @if(count($galleryItems) > 1)
                     <div class="flex gap-3 overflow-x-auto">
-                        @foreach($product->getMedia('images') as $index => $image)
-                            <button wire:click="$set('activeImageIndex', {{ $index }})"
-                                    class="flex-shrink-0 w-20 h-20 rounded-sm overflow-hidden border-2 {{ $activeImageIndex === $index ? 'border-brand-gold' : 'border-transparent' }} transition">
-                                <img src="{{ $image->getUrl('thumb') }}" alt="" class="w-full h-full object-cover">
+                        @foreach($galleryItems as $index => $item)
+                            <button type="button" wire:click="$set('activeImageIndex', {{ $index }})"
+                                    class="flex-shrink-0 w-20 h-20 rounded-sm overflow-hidden border-2 {{ $safeImageIndex === $index ? 'border-brand-gold' : 'border-transparent' }} transition">
+                                <img src="{{ $item['thumb'] }}" alt="" class="w-full h-full object-cover">
                             </button>
                         @endforeach
                     </div>
@@ -45,6 +75,27 @@
 
             <!-- Product Info -->
             <div>
+                @php
+                    $listedVariants = $product->variants->where('is_active', true)->sortBy('sort_order')->values();
+                    $activeVariant = $this->selectedVariantId
+                        ? $listedVariants->firstWhere('id', (int) $this->selectedVariantId)
+                        : null;
+                    if ($activeVariant) {
+                        $isVariantSale = $activeVariant->sale_price !== null
+                            && (float) $activeVariant->sale_price > 0
+                            && (float) $activeVariant->sale_price < (float) $activeVariant->regular_price;
+                        $priceShown = $isVariantSale ? $activeVariant->sale_price : $activeVariant->regular_price;
+                        $compareShown = $isVariantSale ? $activeVariant->regular_price : null;
+                    } else {
+                        $priceShown = $product->price;
+                        $compareShown = $product->compare_price && (float) $product->compare_price > (float) $product->price
+                            ? $product->compare_price
+                            : null;
+                    }
+                    $stockQty = $product->track_stock
+                        ? ($activeVariant ? $activeVariant->stock_quantity : $product->stock_quantity)
+                        : null;
+                @endphp
                 @if($product->brand)
                     <p class="text-sm text-brand-gold tracking-wider uppercase mb-2">{{ $product->brand->name }}</p>
                 @endif
@@ -52,18 +103,53 @@
 
                 <div class="flex items-center gap-3 mb-6">
                     <span class="text-2xl font-medium text-brand-gold">
-                        €{{ number_format($product->price, 2, ',', '.') }}
+                        €{{ number_format((float) $priceShown, 2, ',', '.') }}
                     </span>
-                    @if($product->compare_price && $product->compare_price > $product->price)
+                    @if($compareShown)
                         <span class="text-lg text-gray-500 line-through">
-                            €{{ number_format($product->compare_price, 2, ',', '.') }}
+                            €{{ number_format((float) $compareShown, 2, ',', '.') }}
                         </span>
                     @endif
                 </div>
 
                 <p class="text-gray-400 mb-6">{{ $product->short_description }}</p>
 
-                <p class="text-xs text-gray-500 mb-6">SKU: {{ $product->sku }}</p>
+                <p class="text-xs text-gray-500 mb-6">SKU: {{ $activeVariant->sku ?? $product->sku }}</p>
+
+                @if($listedVariants->count() > 0)
+                    <div class="mb-8">
+                        <h3 class="text-sm font-semibold tracking-wider uppercase text-gray-400 mb-3">Varianti</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            @foreach($listedVariants as $variant)
+                                @php $vImg = ImageHelper::getVariantMainImage($variant); @endphp
+                                <label class="relative flex cursor-pointer gap-3 rounded-sm border p-3 transition {{ (int) $selectedVariantId === (int) $variant->id ? 'border-brand-gold bg-brand-gold/5' : 'border-white/10 hover:border-white/20' }}">
+                                    <input type="radio" wire:model.live="selectedVariantId" value="{{ $variant->id }}" class="sr-only">
+                                    @if($vImg)
+                                        <span class="h-16 w-16 shrink-0 overflow-hidden rounded-sm bg-brand-slate/20">
+                                            <img src="{{ $vImg }}" alt="" class="h-full w-full object-cover">
+                                        </span>
+                                    @endif
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-sm font-medium text-brand-light">{{ $variant->variant_name }}</span>
+                                        @php
+                                            $vSale = $variant->sale_price !== null
+                                                && (float) $variant->sale_price > 0
+                                                && (float) $variant->sale_price < (float) $variant->regular_price;
+                                            $vPrice = $vSale ? $variant->sale_price : $variant->regular_price;
+                                        @endphp
+                                        <span class="mt-1 block text-sm text-brand-gold">€{{ number_format((float) $vPrice, 2, ',', '.') }}</span>
+                                        @if($product->track_stock)
+                                            <span class="mt-1 block text-xs text-gray-500">{{ $variant->stock_quantity > 0 ? $variant->stock_quantity.' disponibili' : 'Non disponibile' }}</span>
+                                        @endif
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('variant')
+                            <p class="mt-2 text-xs text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                @endif
 
                 @if($product->attributes->count() > 0)
                     <div class="space-y-4 mb-8">
@@ -106,9 +192,9 @@
                     </button>
                 </div>
 
-                @if($product->track_stock)
-                    <p class="text-sm {{ $product->stock_quantity > 0 ? 'text-green-400' : 'text-red-400' }}">
-                        {{ $product->stock_quantity > 0 ? 'Disponibile (' . $product->stock_quantity . ' pezzi)' : 'Non disponibile' }}
+                @if($product->track_stock && $stockQty !== null)
+                    <p class="text-sm {{ $stockQty > 0 ? 'text-green-400' : 'text-red-400' }}">
+                        {{ $stockQty > 0 ? 'Disponibile (' . $stockQty . ' pezzi)' : 'Non disponibile' }}
                     </p>
                 @endif
             </div>

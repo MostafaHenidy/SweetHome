@@ -4,7 +4,12 @@
     <a href="{{ route('product.show', $product->slug) }}" class="block flex-1 min-h-0">
         <div class="flex min-h-0 flex-col overflow-hidden shadow-[0_12px_30px_rgba(0,0,0,0.18)] ring-1 ring-white/5 transition duration-300 group-hover:-translate-y-0.5 group-hover:ring-[#b89252]/40">
             <div class="relative aspect-[4/5] overflow-hidden bg-[#24384a]">
-                @if((bool) ($product->has_active_discount ?? false))
+                @if($product->coupons->where('type', 'product_specific')->where('is_active', true)->filter(function($coupon) {
+    $now = now();
+    return ($coupon->starts_at === null || $coupon->starts_at <= $now) &&
+           ($coupon->expires_at === null || $coupon->expires_at > $now) &&
+           ($coupon->max_uses === null || $coupon->used_count < $coupon->max_uses);
+})->count() > 0)
                     <span class="absolute left-3 top-3 z-10 bg-brand-gold px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-dark">
                         Sconto
                     </span>
@@ -25,9 +30,40 @@
                         </button>
                     @endauth
                 </div>
-                @if($product->hasMedia('images') || $product->featured_image)
+                @php
+                    use App\Helpers\ImageHelper;
+
+                    // Try to get image from different sources in order of preference
+                    $productImage = null;
+
+                    // 1. Try product media first
+                    if ($product->hasMedia('images')) {
+                        $productImage = $product->getFirstMediaUrl('images', 'medium');
+                    }
+                    // 2. Try featured image
+                    elseif ($product->featured_image) {
+                        $productImage = $product->featured_image;
+                    }
+                    // 3. Try variant images (our CSV downloaded images)
+                    else {
+                        // Ensure variants are loaded with media
+                        if (!$product->relationLoaded('variants')) {
+                            $product->load('variants.media');
+                        }
+
+                        // Check if any variants have media
+                        $variantsWithMedia = $product->variants->filter(function($variant) {
+                            return $variant->media->count() > 0;
+                        });
+
+                        if ($variantsWithMedia->count() > 0) {
+                            $productImage = ImageHelper::getProductMainImage($product);
+                        }
+                    }
+                @endphp
+                @if($productImage)
                     <img
-                        src="{{ $product->getFirstMediaUrl('images', 'medium') ?: $product->featured_image }}"
+                        src="{{ $productImage }}"
                         alt="{{ $product->name }}"
                         class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         loading="lazy"

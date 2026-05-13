@@ -44,7 +44,21 @@
       "Bash(findstr zip:*)",
       "Bash(findstr com:*)",
       "Bash(winget install:*)",
-      "Bash(composer search:*)"
+      "Bash(composer search:*)",
+      "Bash(awk -F',' 'NR>1 {print \"ID:\", $1, \"Image:\", $8, \"Additional:\", $9}' \"C:\\\\xampp2\\\\htdocs\\\\SweetHome\\\\gfgff.csv\")",
+      "Bash(net start:*)",
+      "Bash(sc query:*)",
+      "Bash(findstr /i mysql)",
+      "Read(//c/xampp/**)",
+      "Bash(mysql_start.bat)",
+      "Bash(./mysql_start.bat)",
+      "Bash(start mysqld.exe --console)",
+      "Bash(mysqld.exe --console --skip-grant-tables)",
+      "Bash(./mysqld.exe --console)",
+      "Bash(./mysql_install_db.exe --datadir=\"C:\\\\xampp\\\\mysql\\\\data\" --user=MostafaHenidy)",
+      "Bash(./mysql_install_db.exe --datadir=\"C:\\\\xampp\\\\mysql\\\\data\")",
+      "Bash(./mysql.exe -h 127.0.0.1 -P 3306 -u root -e \"SELECT 1\")",
+      "Bash(./mysql.exe -h 127.0.0.1 -u root -e \"SHOW DATABASES;\")"
     ]
   }
 }

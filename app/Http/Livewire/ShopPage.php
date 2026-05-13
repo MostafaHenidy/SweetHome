@@ -57,7 +57,9 @@ class ShopPage extends Component
 
     public function render()
     {
-        $query = Product::query()->published()->withActiveDiscounts()->with('activeCoupons');
+        $query = Product::query()->published()->with(['activeCoupons', 'variants.media', 'coupons' => function($q) {
+            $q->where('type', 'product_specific')->active();
+        }]);
 
         if ($this->search) {
             $query->where(function ($q) {
@@ -93,7 +95,7 @@ class ShopPage extends Component
             'price_desc' => $query->orderBy('price', 'desc'),
             'name_asc' => $query->orderBy('name', 'asc'),
             'name_desc' => $query->orderBy('name', 'desc'),
-            default => $query->orderByDiscounts()->latest(),
+            default => $query->latest(),
         };
 
         $products = $query->paginate(27);
@@ -120,5 +122,18 @@ class ShopPage extends Component
         }
 
         return array_values(array_unique($ids));
+    }
+
+    // Helper method to check if product has active discounts
+    public function hasActiveDiscount($product)
+    {
+        return $product->coupons->where('type', 'product_specific')
+            ->where('is_active', true)
+            ->filter(function($coupon) {
+                $now = now();
+                return ($coupon->starts_at === null || $coupon->starts_at <= $now) &&
+                       ($coupon->expires_at === null || $coupon->expires_at > $now) &&
+                       ($coupon->max_uses === null || $coupon->used_count < $coupon->max_uses);
+            })->count() > 0;
     }
 }
