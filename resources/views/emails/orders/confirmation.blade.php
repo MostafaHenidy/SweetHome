@@ -56,11 +56,30 @@
             <p class="total">Totale: €{{ number_format($order->total, 2, ',', '.') }}</p>
         </div>
 
-        <p><strong>Indirizzo di Spedizione:</strong><br>
-        {{ $order->shipping_address['line1'] }}<br>
-        {{ $order->shipping_address['city'] }} {{ $order->shipping_address['postal_code'] }} ({{ $order->shipping_address['province'] }})</p>
+        @if($order->shipping_method === 'delivery')
+            <p><strong>Indirizzo di Spedizione:</strong><br>
+            {{ $order->shipping_address['line1'] ?? '' }}<br>
+            @if($order->shipping_address['line2'] ?? false)
+                {{ $order->shipping_address['line2'] }}<br>
+            @endif
+            {{ $order->shipping_address['city'] ?? '' }} {{ $order->shipping_address['postal_code'] ?? '' }} ({{ $order->shipping_address['province'] ?? '' }})</p>
 
-        <p>Riceverai un'altra email quando il tuo ordine verrà spedito.</p>
+            <p>Riceverai un'altra email quando il tuo ordine verrà spedito.</p>
+        @elseif($order->shipping_method === 'pickup')
+            <p><strong>Punto di Ritiro:</strong><br>
+            {{ $order->shipping_address['location_name'] ?? 'Sede non specificata' }}<br>
+            @if($order->shipping_address['location_address'] ?? false)
+                {{ $order->shipping_address['location_address'] }}<br>
+            @endif
+            @if($order->shipping_address['location_phone'] ?? false)
+                <strong>Telefono:</strong> {{ $order->shipping_address['location_phone'] }}<br>
+            @endif
+            @if($order->shipping_address['location_hours'] ?? false)
+                <strong>Orari:</strong> {{ $order->shipping_address['location_hours'] }}
+            @endif</p>
+
+            <p>Riceverai una notifica quando il tuo ordine sarà pronto per il ritiro.</p>
+        @endif
     </div>
 
     <div class="footer">

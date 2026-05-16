@@ -5,11 +5,14 @@ namespace App\Http\Livewire;
 use App\Events\OrderCreated;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PickupLocation;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\PaymentMethodConfig;
 use App\Services\BrandedPdfService;
 use App\Services\CartService;
 use App\Services\CouponService;
+use App\Services\PaymentInstallmentService;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
@@ -64,6 +67,9 @@ class CheckoutPage extends Component
 
     public $coupon_error = '';
 
+    public $available_payment_methods = [];
+    public $available_pickup_locations = [];
+
     protected CartService $cartService;
     protected PaymentInstallmentService $installmentService;
 
@@ -83,7 +89,7 @@ class CheckoutPage extends Component
         'payment_method' => 'required|in:stripe,paypal,bank_transfer,fawaterak',
         'shipping_method' => 'required|in:delivery,pickup',
         'service_type' => 'required_if:shipping_method,delivery|in:shipping_only,shipping_and_construction',
-        'pickup_location' => 'required_if:shipping_method,pickup|string|max:255',
+        'pickup_location' => 'required_if:shipping_method,pickup|integer|exists:pickup_locations,id',
         'shipping_address_line1' => 'required_if:shipping_method,delivery|string|max:255',
         'shipping_address_line2' => 'nullable|string|max:255',
         'shipping_city' => 'required_if:shipping_method,delivery|string|max:100',
@@ -135,6 +141,48 @@ class CheckoutPage extends Component
                 $this->shipping_postal_code = auth()->user()->postal_code ?? '';
                 $this->shipping_country = auth()->user()->country ?? 'IT';
             }
+        }
+
+        // Load available payment methods
+        $this->loadAvailablePaymentMethods();
+
+        // Load available pickup locations
+        $this->loadAvailablePickupLocations();
+    }
+
+    /**
+     * Load available payment methods based on admin configuration
+     */
+    public function loadAvailablePaymentMethods(): void
+    {
+        $config = PaymentMethodConfig::getInstance();
+        $this->available_payment_methods = $config->getEnabledPaymentMethods();
+
+        // If no payment methods are enabled, default to cash on delivery
+        if (empty($this->available_payment_methods)) {
+            $this->available_payment_methods = ['cash_on_delivery'];
+        }
+
+        // Set default payment method to first available method
+        if (!in_array($this->payment_method, $this->available_payment_methods)) {
+            $this->payment_method = $this->available_payment_methods[0];
+        }
+    }
+
+    /**
+     * Load available pickup locations from database
+     */
+    public function loadAvailablePickupLocations(): void
+    {
+        $this->available_pickup_locations = PickupLocation::getActive()->mapWithKeys(function ($location) {
+            return [$location->id => "{$location->name} - {$location->getFormattedAddressAttribute()}"];
+        })->toArray();
+
+        // Set default pickup location if current value is not valid
+        if ($this->shipping_method === 'pickup' &&
+            !empty($this->pickup_location) &&
+            !array_key_exists($this->pickup_location, $this->available_pickup_locations)) {
+            $this->pickup_location = '';
         }
     }
 
@@ -195,6 +243,22 @@ class CheckoutPage extends Component
 
     public function placeOrder()
     {
+        // Check customer debt limit before proceeding
+        if (auth()->check()) {
+            $user = auth()->user();
+            $totalOrderAmount = $this->subtotal + $this->shippingCost - ($this->applied_coupon['discount'] ?? 0);
+
+            if (!$user->canPlaceOrder($totalOrderAmount)) {
+                $remainingCredit = $user->remainingCredit;
+                $this->addError('debt_limit',
+                    $remainingCredit > 0
+                        ? "Importo ordine supera il tuo limite di credito disponibile (€" . number_format($remainingCredit, 2, ',', '.') . ")"
+                        : "Hai superato il tuo limite di credito. Impossibile completare l'ordine."
+                );
+                return;
+            }
+        }
+
         $this->validate([
             'customer_name' => 'required|string|min:2|max:255',
             'customer_email' => 'required|email|max:255',
@@ -208,10 +272,10 @@ class CheckoutPage extends Component
             'province' => 'required|string|max:100',
             'postal_code' => 'required|string|max:10',
             'country' => 'required|string|max:2',
-            'payment_method' => 'required|in:stripe,paypal,bank_transfer,fawaterak',
+            'payment_method' => 'required|in:' . implode(',', $this->available_payment_methods),
             'shipping_method' => 'required|in:delivery,pickup',
             'service_type' => 'required_if:shipping_method,delivery|in:shipping_only,shipping_and_construction',
-            'pickup_location' => 'required_if:shipping_method,pickup|string|max:255',
+            'pickup_location' => 'required_if:shipping_method,pickup|integer|exists:pickup_locations,id',
             'shipping_address_line1' => 'required_if:shipping_method,delivery|string|max:255',
             'shipping_address_line2' => 'nullable|string|max:255',
             'shipping_city' => 'required_if:shipping_method,delivery|string|max:100',
@@ -233,17 +297,27 @@ class CheckoutPage extends Component
         }
 
         // Determine shipping address based on method
-        $shippingAddress = $this->shipping_method === 'delivery' ? [
-            'line1' => $this->shipping_address_line1,
-            'line2' => $this->shipping_address_line2,
-            'city' => $this->shipping_city,
-            'province' => $this->shipping_province,
-            'postal_code' => $this->shipping_postal_code,
-            'country' => $this->shipping_country,
-        ] : [
-            'type' => 'pickup',
-            'location' => $this->pickup_location,
-        ];
+        if ($this->shipping_method === 'delivery') {
+            $shippingAddress = [
+                'line1' => $this->shipping_address_line1,
+                'line2' => $this->shipping_address_line2,
+                'city' => $this->shipping_city,
+                'province' => $this->shipping_province,
+                'postal_code' => $this->shipping_postal_code,
+                'country' => $this->shipping_country,
+            ];
+        } else {
+            // Get pickup location details
+            $pickupLocation = PickupLocation::find($this->pickup_location);
+            $shippingAddress = [
+                'type' => 'pickup',
+                'location_id' => $this->pickup_location,
+                'location_name' => $pickupLocation->name,
+                'location_address' => $pickupLocation->getFormattedAddressAttribute(),
+                'location_phone' => $pickupLocation->phone,
+                'location_hours' => $pickupLocation->hours,
+            ];
+        }
 
         $order = Order::create([
             'order_number' => 'SH-'.date('Ymd').'-'.str_pad(Order::count() + 1, 4, '0', STR_PAD_LEFT),
@@ -256,6 +330,7 @@ class CheckoutPage extends Component
             'customer_vat_number' => $this->customer_vat_number ?: null,
             'customer_tax_code' => $this->customer_tax_code ?: null,
             'shipping_address' => $shippingAddress,
+            'pickup_location_id' => $this->shipping_method === 'pickup' ? $this->pickup_location : null,
             // Store billing address as customer address
             'billing_address' => [
                 'line1' => $this->address_line1,
@@ -428,6 +503,15 @@ class CheckoutPage extends Component
     public function getIsDeliveryProperty()
     {
         return $this->shipping_method === 'delivery';
+    }
+
+    public function getSelectedPickupLocationProperty()
+    {
+        if ($this->shipping_method !== 'pickup' || !$this->pickup_location) {
+            return null;
+        }
+
+        return PickupLocation::find($this->pickup_location);
     }
 
     public function render()

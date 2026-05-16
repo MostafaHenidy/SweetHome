@@ -27,6 +27,8 @@ class Order extends Model
         'shipping_method', 'service_type', 'payment_plan_type', 'deposit_amount',
         // VIP system fields
         'is_vip_order', 'points_earned', 'points_redeemed', 'buy_buy_dept',
+        // Pickup location
+        'pickup_location_id',
     ];
 
     protected $casts = [
@@ -96,6 +98,11 @@ class Order extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function pickupLocation(): BelongsTo
+    {
+        return $this->belongsTo(PickupLocation::class, 'pickup_location_id');
+    }
+
     public function paymentInstallments(): HasMany
     {
         return $this->hasMany(PaymentInstallment::class)->orderBy('installment_number');
@@ -124,6 +131,45 @@ class Order extends Model
     public function canBeAccepted(): bool
     {
         return $this->status === 'quote_sent' && ! $this->isQuoteExpired();
+    }
+
+    /** @return array<string, string> */
+    public static function adminStatusLabels(): array
+    {
+        return [
+            'pending' => 'In attesa',
+            'pending_deposit' => 'In attesa deposito',
+            'deposit_paid' => 'Caparra pagata',
+            'processing' => 'In lavorazione',
+            'shipped' => 'Spedito',
+            'delivered' => 'Consegnato',
+            'construction_scheduled' => 'Cantiere pianificato',
+            'construction_in_progress' => 'Cantiere in corso',
+            'construction_completed' => 'Cantiere completato',
+            'completed' => 'Completato',
+            'cancelled' => 'Annullato',
+            'awaiting_payment' => 'In attesa pagamento',
+            'paid' => 'Pagato',
+            'quote_sent' => 'Preventivo inviato',
+            'quote_accepted' => 'Preventivo accettato',
+            'quote_rejected' => 'Preventivo rifiutato',
+        ];
+    }
+
+    public static function adminStatusBadgeColor(?string $state): string
+    {
+        if ($state === null || $state === '') {
+            return 'gray';
+        }
+
+        return match ($state) {
+            'pending', 'pending_deposit', 'awaiting_payment' => 'warning',
+            'quote_sent', 'processing', 'construction_scheduled', 'deposit_paid' => 'info',
+            'shipped', 'delivered', 'construction_in_progress' => 'primary',
+            'quote_accepted', 'completed', 'paid', 'construction_completed' => 'success',
+            'cancelled', 'quote_rejected' => 'danger',
+            default => 'gray',
+        };
     }
 
     // Enhanced order system helper methods

@@ -135,17 +135,17 @@ class QuoteRequestPage extends Component
         // Use component's already-loaded cart items (re-fetching via prepareOrderItems
         // can return empty if the session/cart changed between mount and submit).
         $orderItems = collect($this->cartItems)->map(function ($item) {
-            $product = Product::find($item['product_id']);
+            $product = Product::find(data_get($item, 'product_id'));
 
             return [
-                'product_id' => $item['product_id'],
-                'product_name' => $item['name'] ?? ($product?->name ?? 'Prodotto'),
+                'product_id' => data_get($item, 'product_id'),
+                'product_name' => data_get($item, 'name') ?? ($product?->name ?? 'Prodotto'),
                 'product_sku' => $product?->sku ?? '',
-                'line_description' => $product?->quoteLineDescription() ?? ($item['name'] ?? 'Prodotto'),
-                'quantity' => (int) ($item['quantity'] ?? 1),
-                'unit_price' => (float) ($item['unit_price'] ?? $item['price'] ?? 0),
-                'total_price' => (float) ($item['total_price'] ?? 0),
-                'attribute_selection' => $item['attribute_selection'] ?? $item['attributes'] ?? [],
+                'line_description' => $product?->quoteLineDescription() ?? (data_get($item, 'name') ?? 'Prodotto'),
+                'quantity' => (int) (data_get($item, 'quantity') ?? 1),
+                'unit_price' => (float) (data_get($item, 'unit_price') ?? data_get($item, 'price') ?? 0),
+                'total_price' => (float) (data_get($item, 'total_price') ?? 0),
+                'attribute_selection' => data_get($item, 'attribute_selection') ?? data_get($item, 'attributes') ?? [],
                 'vat_rate' => $product?->vat_rate !== null
                     ? (float) $product->vat_rate
                     : (float) Setting::get('default_vat_rate', 22),

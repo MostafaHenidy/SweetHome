@@ -2,13 +2,18 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\UserResource;
 use App\Models\User;
 use App\Models\Setting;
 use App\Services\VipService;
+use Carbon\Carbon;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Toggle;
+use Filament\Pages\Concerns\InteractsWithFormActions;
 use Filament\Pages\Page;
 use Filament\Forms\Form;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -21,6 +26,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class VipManagement extends Page implements HasForms, HasTable
 {
+    use InteractsWithFormActions;
     use InteractsWithForms;
     use InteractsWithTable;
 
@@ -83,11 +89,12 @@ class VipManagement extends Page implements HasForms, HasTable
     {
         return $table
             ->query(User::query()->where('is_vip', true))
+            ->modifyQueryUsing(fn (Builder $query) => $query->withSum('orders', 'total'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->clickable(),
+                    ->url(fn (User $record): string => UserResource::getUrl('edit', ['record' => $record])),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
@@ -97,11 +104,10 @@ class VipManagement extends Page implements HasForms, HasTable
                         'info' => 'manual',
                         'success' => 'automatic',
                     ]),
-                Tables\Columns\TextColumn::make('lifetime_spend')
+                Tables\Columns\TextColumn::make('orders_sum_total')
                     ->label('Lifetime Spend')
                     ->money('EUR', locale: 'it_IT')
-                    ->sortable()
-                    ->query(fn(Builder $query) => $query->withSum('orders', 'total')),
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('points_balance')
                     ->label('Points Balance')
                     ->sortable(),
@@ -123,19 +129,17 @@ class VipManagement extends Page implements HasForms, HasTable
                 Tables\Filters\Filter::make('vip_assigned_at')
                     ->label('Assignment Date')
                     ->form([
-                        TextInput::make('from')
-                            ->label('From')
-                            ->date(),
-                        TextInput::make('to')
-                            ->label('To')
-                            ->date(),
+                        DatePicker::make('from')
+                            ->label('From'),
+                        DatePicker::make('to')
+                            ->label('To'),
                     ])
-                    ->query(function (Builder $query, array $data) {
-                        if ($data['from']) {
-                            $query->where('vip_assigned_at', '>=', $data['from']);
+                    ->query(function (Builder $query, array $data): void {
+                        if (filled($data['from'] ?? null)) {
+                            $query->where('vip_assigned_at', '>=', Carbon::parse($data['from'])->startOfDay());
                         }
-                        if ($data['to']) {
-                            $query->where('vip_assigned_at', '<=', $data['to']);
+                        if (filled($data['to'] ?? null)) {
+                            $query->where('vip_assigned_at', '<=', Carbon::parse($data['to'])->endOfDay());
                         }
                     }),
             ])
@@ -156,7 +160,7 @@ class VipManagement extends Page implements HasForms, HasTable
                             ->label('Points to Add')
                             ->numeric()
                             ->required()
-                            ->min(0),
+                            ->minValue(0),
                         Textarea::make('description')
                             ->label('Description')
                             ->required()
@@ -177,7 +181,7 @@ class VipManagement extends Page implements HasForms, HasTable
                                 ->label('Points to Add')
                                 ->numeric()
                                 ->required()
-                                ->min(0),
+                                ->minValue(0),
                             Textarea::make('description')
                                 ->label('Description')
                                 ->required()
@@ -235,7 +239,7 @@ class VipManagement extends Page implements HasForms, HasTable
     protected function getFormActions(): array
     {
         return [
-            \Filament\Forms\Components\Actions\Action::make('save')
+            Action::make('save')
                 ->label('Save Settings')
                 ->submit('saveSettings'),
         ];

@@ -13,7 +13,9 @@ class CreateUser extends CreateRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\IndexAction::make(),
+            Actions\Action::make('index')
+                ->label(__('filament-panels::resources/pages/create-record.form.actions.cancel.label'))
+                ->url(fn (): string => static::getResource()::getUrl('index')),
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\PaymentInstallment;
+use App\Models\PaymentMethodConfig;
 use App\Services\PaymentService;
 use App\Services\PaymentInstallmentService;
 use Illuminate\Http\Request;
@@ -22,8 +23,18 @@ class PaymentController extends Controller
         $method = $request->input('method', $order->payment_method);
         $installmentNumber = $request->input('installment', 1);
 
+        // Get enabled payment methods from configuration
+        $config = PaymentMethodConfig::getInstance();
+        $enabledMethods = $config->getEnabledPaymentMethods();
+
+        // If no payment methods are enabled, default to cash on delivery
+        if (empty($enabledMethods)) {
+            $enabledMethods = ['cash_on_delivery'];
+        }
+
+        // Validate that the requested method is enabled
         validator(['method' => $method], [
-            'method' => 'required|in:stripe,paypal,bank_transfer,fawaterak',
+            'method' => 'required|in:' . implode(',', $enabledMethods),
         ])->validate();
 
         // For orders with installments, get the specific installment to pay
@@ -68,6 +79,17 @@ class PaymentController extends Controller
         if ($method === 'bank_transfer') {
             if ($installment) {
                 $this->installmentService->markInstallmentPaid($installment, 'bank_transfer_pending');
+            } else {
+                $this->paymentService->markOrderAwaitingPayment($order);
+            }
+
+            return redirect()->route('checkout.success', $order->order_number);
+        }
+
+        if ($method === 'cash_on_delivery') {
+            // Cash on delivery - mark order as awaiting payment (to be paid at delivery)
+            if ($installment) {
+                $this->installmentService->markInstallmentPaid($installment, 'cash_on_delivery_pending');
             } else {
                 $this->paymentService->markOrderAwaitingPayment($order);
             }

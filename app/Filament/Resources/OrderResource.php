@@ -57,14 +57,10 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('total')
                     ->money('EUR', locale: 'it_IT')
                     ->sortable(),
-                Tables\Columns\BadgeColumn::make('status')
-                    ->colors([
-                        'warning' => 'pending',
-                        'info' => 'processing',
-                        'primary' => 'shipped',
-                        'success' => 'completed',
-                        'danger' => 'cancelled',
-                    ])
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state) => Order::adminStatusLabels()[$state ?? ''] ?? $state)
+                    ->color(fn (?string $state) => Order::adminStatusBadgeColor($state))
                     ->searchable(),
                 Tables\Columns\BadgeColumn::make('payment_status')
                     ->colors([
@@ -74,13 +70,9 @@ class OrderResource extends Resource
                         'info' => 'refunded',
                     ])
                     ->searchable(),
-                Tables\Columns\BadgeColumn::make('is_vip_order')
+                Tables\Columns\IconColumn::make('is_vip_order')
                     ->label('VIP')
-                    ->boolean()
-                    ->colors([
-                        'success' => true,
-                        'gray' => false,
-                    ]),
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('buy_buy_dept')
                     ->label('Dept')
                     ->searchable(),
@@ -90,13 +82,7 @@ class OrderResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        'pending' => 'In attesa',
-                        'processing' => 'In lavorazione',
-                        'shipped' => 'Spedito',
-                        'completed' => 'Completato',
-                        'cancelled' => 'Annullato',
-                    ]),
+                    ->options(Order::adminStatusLabels()),
                 Tables\Filters\SelectFilter::make('payment_status')
                     ->options([
                         'pending' => 'In attesa',

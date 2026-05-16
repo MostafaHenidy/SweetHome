@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\UserResource;
 use App\Models\User;
 use App\Services\VipService;
 use Filament\Pages\Page;
@@ -26,28 +27,29 @@ class NonVipCustomers extends Page implements HasTable
     {
         return $table
             ->query(User::query()->where('is_vip', false))
+            ->modifyQueryUsing(fn (Builder $query) => $query
+                ->withSum('orders', 'total')
+                ->withMax('orders', 'created_at'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->clickable(),
+                    ->url(fn (User $record): string => UserResource::getUrl('edit', ['record' => $record])),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('lifetime_spend')
+                Tables\Columns\TextColumn::make('orders_sum_total')
                     ->label('Total Spend (All Time)')
                     ->money('EUR', locale: 'it_IT')
-                    ->sortable()
-                    ->query(fn(Builder $query) => $query->withSum('orders', 'total')),
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('orders_count')
                     ->label('Total Orders')
                     ->counts('orders')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('last_order_date')
+                Tables\Columns\TextColumn::make('orders_max_created_at')
                     ->label('Last Order')
                     ->dateTime('d/m/Y')
-                    ->sortable()
-                    ->query(fn(Builder $query) => $query->withMax('orders', 'created_at')),
+                    ->sortable(),
             ])
             ->filters([
                 Tables\Filters\Filter::make('near_vip')

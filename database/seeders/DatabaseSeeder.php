@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
             InHouseProductSeeder::class,
             SettingSeeder::class,
             PointsConfigurationSeeder::class,
-            ProductCsvSeeder::class,
+            EnhancedProductCsvSeeder::class,
+            PaymentManagementSeeder::class,
+            PickupLocationsSeeder::class,
         ]);
     }
 }

@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Services\PointsService;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -48,6 +49,10 @@ class User extends Authenticatable
         'vip_type',
         'vip_assigned_at',
         'vip_assigned_by',
+        'role',
+        'status',
+        'custom_debt_limit',
+        'override_global_debt_limit',
     ];
 
     /**
@@ -97,6 +102,73 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    /**
+     * Get the debt record for this user
+     */
+    public function debt(): HasOne
+    {
+        return $this->hasOne(CustomerDebt::class);
+    }
+
+    /**
+     * Get the user's current debt amount
+     */
+    public function getCurrentDebtAttribute(): float
+    {
+        return $this->debt?->current_debt ?? 0.00;
+    }
+
+    /**
+     * Get the user's debt limit (custom or global)
+     */
+    public function getDebtLimitAttribute(): float
+    {
+        if ($this->override_global_debt_limit && $this->custom_debt_limit !== null) {
+            return (float) $this->custom_debt_limit;
+        }
+
+        if ($this->debt) {
+            return $this->debt->getEffectiveDebtLimit();
+        }
+
+        // Fall back to global setting
+        $settings = \App\Models\PaymentMethodConfig::getInstance();
+        return (float) $settings->global_debt_limit;
+    }
+
+    /**
+     * Get remaining credit available
+     */
+    public function getRemainingCreditAttribute(): float
+    {
+        return $this->debtLimit - $this->currentDebt;
+    }
+
+    /**
+     * Check if user can place an order of specified amount
+     */
+    public function canPlaceOrder(float $orderAmount): bool
+    {
+        if (!$this->debt) {
+            return true;
+        }
+
+        return $this->debt->canPlaceOrder($orderAmount);
+    }
+
+    /**
+     * Get debt utilization percentage
+     */
+    public function getDebtUtilizationAttribute(): float
+    {
+        if (!$this->debt) {
+            return 0;
+        }
+
+        return $this->debt->getDebtUtilization();
+    }
+    
+
     public function pointsTransactions(): HasMany
     {
         return $this->hasMany(PointsTransaction::class);
@@ -140,11 +212,6 @@ class User extends Authenticatable
     public function getPointsValueInEurosAttribute(): float
     {
         return app(PointsService::class)->convertPointsToEuros($this->points_balance ?? 0);
-    }
-
-    public function currentTeam()
-    {
-        return $this->belongsTo(Team::class);
     }
 
     /**

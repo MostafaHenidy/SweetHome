@@ -58,6 +58,47 @@
                                     @error('customer_tax_code')<p class="text-red-400 text-xs mt-1">{{ $message }}</p>@enderror
                                 </div>
                             </div>
+
+                            <h3 class="text-lg font-medium text-brand-light mt-8 mb-4">Indirizzo di Fatturazione</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-1">Indirizzo *</label>
+                                    <input type="text" wire:model="address_line1" class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light rounded-sm focus:outline-none focus:border-brand-gold transition @error('address_line1') border-red-500 @enderror">
+                                    @error('address_line1')<p class="text-red-400 text-xs mt-1">{{ $message }}</p>@enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-1">Indirizzo 2 (opzionale)</label>
+                                    <input type="text" wire:model="address_line2" class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light rounded-sm focus:outline-none focus:border-brand-gold transition">
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm text-gray-400 mb-1">Città *</label>
+                                        <input type="text" wire:model="city" class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light rounded-sm focus:outline-none focus:border-brand-gold transition @error('city') border-red-500 @enderror">
+                                        @error('city')<p class="text-red-400 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm text-gray-400 mb-1">Provincia *</label>
+                                        <input type="text" wire:model="province" class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light rounded-sm focus:outline-none focus:border-brand-gold transition @error('province') border-red-500 @enderror">
+                                        @error('province')<p class="text-red-400 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm text-gray-400 mb-1">CAP *</label>
+                                        <input type="text" wire:model="postal_code" class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light rounded-sm focus:outline-none focus:border-brand-gold transition @error('postal_code') border-red-500 @enderror">
+                                        @error('postal_code')<p class="text-red-400 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm text-gray-400 mb-1">Paese *</label>
+                                        <select wire:model="country" class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light rounded-sm focus:outline-none focus:border-brand-gold transition @error('country') border-red-500 @enderror">
+                                            <option value="IT">Italia</option>
+                                            <option value="US">Stati Uniti</option>
+                                            <option value="GB">Regno Unito</option>
+                                        </select>
+                                        @error('country')<p class="text-red-400 text-xs mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <button wire:click="nextStep" class="mt-6 w-full px-6 py-3 bg-brand-gold text-brand-dark text-sm font-semibold tracking-widest uppercase hover:bg-opacity-90 transition rounded-sm">Continua</button>
                     </div>
@@ -149,18 +190,38 @@
                                 <label class="block text-sm text-gray-400 mb-1">Seleziona sede *</label>
                                 <select wire:model="pickup_location" class="w-full px-4 py-3 bg-brand-dark/50 border border-white/10 text-brand-light rounded-sm focus:outline-none focus:border-brand-gold transition @error('pickup_location') border-red-500 @enderror">
                                     <option value="">Seleziona una sede</option>
-                                    <option value="main_warehouse">Magazzino Principale - Milano</option>
-                                    <option value="rome_showroom">Showroom Roma</option>
-                                    <option value="naples_warehouse">Magazzino Napoli</option>
+                                    @foreach($available_pickup_locations as $id => $name)
+                                        <option value="{{ $id }}">{{ $name }}</option>
+                                    @endforeach
                                 </select>
                                 @error('pickup_location')<p class="text-red-400 text-xs mt-1">{{ $message }}</p>@enderror
                             </div>
+                            @if($this->selectedPickupLocation)
                             <div class="bg-brand-dark/30 rounded-sm p-4 text-sm text-gray-400">
-                                <p>📍 Magazzino Principale - Milano</p>
-                                <p>Via delle Industrie, 123</p>
-                                <p>20138 Milano (MI)</p>
-                                <p class="mt-2">🕐 Lun-Ven: 9:00-18:00, Sab: 9:00-13:00</p>
+                                <p>📍 {{ $this->selectedPickupLocation->name }}</p>
+                                @if($this->selectedPickupLocation->address)
+                                    <p>{{ $this->selectedPickupLocation->address }}</p>
+                                @endif
+                                @if($this->selectedPickupLocation->postal_code || $this->selectedPickupLocation->city)
+                                    <p>
+                                        {{ $this->selectedPickupLocation->postal_code }} {{ $this->selectedPickupLocation->city }}
+                                        @if($this->selectedPickupLocation->province)
+                                            ({{ $this->selectedPickupLocation->province }})
+                                        @endif
+                                    </p>
+                                @endif
+                                @if($this->selectedPickupLocation->phone)
+                                    <p>📞 {{ $this->selectedPickupLocation->phone }}</p>
+                                @endif
+                                @if($this->selectedPickupLocation->hours)
+                                    <p class="mt-2">🕐 {{ $this->selectedPickupLocation->hours }}</p>
+                                @endif
                             </div>
+                            @else
+                            <div class="bg-brand-dark/30 rounded-sm p-4 text-sm text-gray-400">
+                                <p class="text-gray-500">Seleziona una sede per vedere i dettagli</p>
+                            </div>
+                            @endif
                         </div>
                         @endif
 
@@ -203,6 +264,7 @@
                         </div>
 
                         <div class="space-y-3">
+                            @if(in_array('fawaterak', $available_payment_methods))
                             <label class="flex items-center gap-3 p-4 border border-white/10 rounded-sm cursor-pointer hover:border-brand-gold/50 transition {{ $payment_method === 'fawaterak' ? 'border-brand-gold/50 bg-brand-gold/5' : '' }}">
                                 <input type="radio" wire:model="payment_method" value="fawaterak" class="text-brand-gold">
                                 <div>
@@ -210,6 +272,9 @@
                                     <p class="text-xs text-gray-500">Pagamento sicuro via Fawaterak</p>
                                 </div>
                             </label>
+                            @endif
+
+                            @if(in_array('stripe', $available_payment_methods))
                             <label class="flex items-center gap-3 p-4 border border-white/10 rounded-sm cursor-pointer hover:border-brand-gold/50 transition {{ $payment_method === 'stripe' ? 'border-brand-gold/50 bg-brand-gold/5' : '' }}">
                                 <input type="radio" wire:model="payment_method" value="stripe" class="text-brand-gold">
                                 <div>
@@ -217,6 +282,9 @@
                                     <p class="text-xs text-gray-500">Visa, Mastercard, American Express</p>
                                 </div>
                             </label>
+                            @endif
+
+                            @if(in_array('paypal', $available_payment_methods))
                             <label class="flex items-center gap-3 p-4 border border-white/10 rounded-sm cursor-pointer hover:border-brand-gold/50 transition {{ $payment_method === 'paypal' ? 'border-brand-gold/50 bg-brand-gold/5' : '' }}">
                                 <input type="radio" wire:model="payment_method" value="paypal" class="text-brand-gold">
                                 <div>
@@ -224,6 +292,9 @@
                                     <p class="text-xs text-gray-500">Paga con il tuo account PayPal</p>
                                 </div>
                             </label>
+                            @endif
+
+                            @if(in_array('bank_transfer', $available_payment_methods))
                             <label class="flex items-center gap-3 p-4 border border-white/10 rounded-sm cursor-pointer hover:border-brand-gold/50 transition {{ $payment_method === 'bank_transfer' ? 'border-brand-gold/50 bg-brand-gold/5' : '' }}">
                                 <input type="radio" wire:model="payment_method" value="bank_transfer" class="text-brand-gold">
                                 <div>
@@ -231,7 +302,25 @@
                                     <p class="text-xs text-gray-500">Pagamento anticipato tramite bonifico</p>
                                 </div>
                             </label>
+                            @endif
+
+                            @if(in_array('cash_on_delivery', $available_payment_methods))
+                            <label class="flex items-center gap-3 p-4 border border-white/10 rounded-sm cursor-pointer hover:border-brand-gold/50 transition {{ $payment_method === 'cash_on_delivery' ? 'border-brand-gold/50 bg-brand-gold/5' : '' }}">
+                                <input type="radio" wire:model="payment_method" value="cash_on_delivery" class="text-brand-gold">
+                                <div>
+                                    <span class="text-brand-light text-sm font-medium">Contrassegno</span>
+                                    <p class="text-xs text-gray-500">Paga alla consegna in contanti</p>
+                                </div>
+                            </label>
+                            @endif
                         </div>
+                        {{-- Debt Limit Error --}}
+                        @if($errors->has('debt_limit'))
+                        <div class="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded-sm mb-4">
+                            <p class="text-sm">{{ $errors->first('debt_limit') }}</p>
+                        </div>
+                        @endif
+
                         <div class="flex gap-4 mt-6">
                             <button wire:click="$set('step', 2)" class="px-6 py-3 border border-white/20 text-brand-light text-sm font-semibold tracking-widest uppercase hover:border-brand-gold transition rounded-sm">Indietro</button>
                             <button wire:click="placeOrder" class="flex-1 px-6 py-3 bg-brand-gold text-brand-dark text-sm font-semibold tracking-widest uppercase hover:bg-opacity-90 transition rounded-sm">Conferma Ordine</button>

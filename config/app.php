@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Email Addresses
+    |--------------------------------------------------------------------------
+    |
+    | These email addresses will receive notifications for new orders,
+    | quote requests, and other important admin notifications.
+    |
+    */
+
+    'admin_emails' => explode(',', env('ADMIN_EMAILS', 'admin@sweethome.it')),
+
 ];

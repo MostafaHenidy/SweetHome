@@ -103,13 +103,7 @@ class ViewOrder extends ViewRecord
                 ->icon('heroicon-o-arrow-path')
                 ->form([
                     Select::make('status')
-                        ->options([
-                            'pending' => 'In attesa',
-                            'processing' => 'In lavorazione',
-                            'shipped' => 'Spedito',
-                            'completed' => 'Completato',
-                            'cancelled' => 'Annullato',
-                        ])
+                        ->options(Order::adminStatusLabels())
                         ->required(),
                 ])
                 ->action(function (Order $record, array $data): void {
@@ -154,13 +148,8 @@ class ViewOrder extends ViewRecord
                     TextEntry::make('customer_phone'),
                     TextEntry::make('status')
                         ->badge()
-                        ->colors([
-                            'warning' => 'pending',
-                            'info' => 'processing',
-                            'primary' => 'shipped',
-                            'success' => 'completed',
-                            'danger' => 'cancelled',
-                        ]),
+                        ->formatStateUsing(fn (?string $state) => Order::adminStatusLabels()[$state ?? ''] ?? $state)
+                        ->color(fn (?string $state) => Order::adminStatusBadgeColor($state)),
                     TextEntry::make('payment_status')
                         ->badge()
                         ->colors([
